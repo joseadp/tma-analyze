@@ -5,13 +5,18 @@ import java.sql.SQLException;
 
 public class DataManager {
 
-    public void getData() {
+    public void getData(String stringTime) {
         DatabaseManager databaseManager = new DatabaseManager();
-        ResultSet rs = databaseManager.executeQuery("select * from Data order by valueTime;");
-        
+        String sql = "select * from Data "
+                + "where "
+                + "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i\") = \"" + stringTime + "\""
+                + "order by valueTime;";
+        ResultSet rs = databaseManager.executeQuery(sql);
+
         try {
+            System.out.println("stringTime: " + stringTime);
+            System.out.println("sql: " + sql);
             while (rs.next()) {
-                System.out.println(rs.getObject("probeId"));
                 System.out.println(rs.getObject("descriptionId"));
                 System.out.println(rs.getObject("resourceId"));
                 System.out.println(rs.getObject("valueTime"));
@@ -21,5 +26,5 @@ public class DataManager {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-	}
+    }
 }
