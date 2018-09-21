@@ -53,4 +53,12 @@ public class Score {
         Double score = 0.5 * a1 + 0.5 * a2;
         return score;
     }
+
+    public String getCsvLine() {
+        return this.getCpuPod().toString() +
+            "," + this.getMemoryPod().toString() +
+            "," + this.getCpuNode().toString() +
+            "," + this.getMemoryNode().toString() +
+            "," + this.getScore().toString();
+    }
 }

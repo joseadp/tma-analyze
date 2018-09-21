@@ -9,11 +9,12 @@ import eubr.atmosphere.tma.analyze.utils.Constants;
 
 public class DataManager {
 
-    public void getData(String stringTime) {
+    public Score getData(String stringTime) {
         String sql = "select * from Data "
                 + "where "
                 + "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i\") = ? "
                 + "order by valueTime;";
+        Score score = null;
 
         try {
             PreparedStatement ps =
@@ -22,7 +23,7 @@ public class DataManager {
             ResultSet rs = DatabaseManager.executeQuery(ps);
 
             if (rs.next()) {
-                Score score = new Score();
+                score = new Score();
                 String valueTime = "";
                 do {
                     int descriptionId = ((Integer) rs.getObject("descriptionId"));
@@ -58,14 +59,12 @@ public class DataManager {
                     }
                     valueTime = rs.getObject("valueTime").toString();
                 } while (rs.next());
-
-                System.out.println(valueTime + ": " + score.toString());
-                System.out.println("Score: " + score.getScore());
             } else {
                 System.out.println("No data on: " + stringTime);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return score;
     }
 }
