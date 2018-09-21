@@ -10,12 +10,6 @@ public class Main {
     public static void main(String[] args) {
         DataManager dataManager = new DataManager();
 
-        int cpuDescriptionId = 27;
-        int memoryDescriptionId = 28;
-
-        int podId = 8; //kafka
-        int nodeId = 11;
-
         String stringTime = "2018-09-20 11:10";
 
         for (int i = 0; i < 60; i++) {

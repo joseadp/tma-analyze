@@ -43,6 +43,16 @@ public class DatabaseManager {
         return rs;
     }
 
+    public static ResultSet executeQuery(PreparedStatement ps) {
+        ResultSet rs = null;
+        try {
+            rs = ps.executeQuery();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return rs;
+    }
+
     public void close() {
         try {
             if (resultSet != null) {
