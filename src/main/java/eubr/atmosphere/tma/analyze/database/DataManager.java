@@ -10,7 +10,6 @@ import eubr.atmosphere.tma.analyze.utils.Constants;
 public class DataManager {
 
     public void getData(String stringTime) {
-        DatabaseManager databaseManager = new DatabaseManager();
         String sql = "select * from Data "
                 + "where "
                 + "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i\") = ? "
@@ -20,48 +19,51 @@ public class DataManager {
             PreparedStatement ps =
                     DatabaseManager.getConnectionInstance().prepareStatement(sql);
             ps.setString(1, stringTime);
-            ResultSet rs = databaseManager.executeQuery(ps);
+            ResultSet rs = DatabaseManager.executeQuery(ps);
 
-            System.out.println("stringTime: " + stringTime);
-            Score score = new Score();
-            String valueTime = "";
-            while (rs.next()) {
-                int descriptionId = ((Integer) rs.getObject("descriptionId"));
-                int resourceId = ((Integer) rs.getObject("resourceId"));
+            if (rs.next()) {
+                Score score = new Score();
+                String valueTime = "";
+                do {
+                    int descriptionId = ((Integer) rs.getObject("descriptionId"));
+                    int resourceId = ((Integer) rs.getObject("resourceId"));
 
-                Double value = ((Double) rs.getObject("value"));
-                System.out.println();
+                    Double value = ((Double) rs.getObject("value"));
 
-                if (descriptionId == Constants.cpuDescriptionId) {
-                    if (resourceId == Constants.podId) {
-                        score.setCpuPod(value);
-                    } else {
-                        if (resourceId == Constants.nodeId) {
-                            score.setCpuNode(value);
-                        } else {
-                            System.err.println("Something is not right!");
-                        }
-                    }
-                } else {
-                    // Memory
-                    if (descriptionId == Constants.memoryDescriptionId) {
+                    if (descriptionId == Constants.cpuDescriptionId) {
                         if (resourceId == Constants.podId) {
-                            score.setMemoryPod(value);
+                            score.setCpuPod(value);
                         } else {
                             if (resourceId == Constants.nodeId) {
-                                score.setMemoryNode(value);
+                                score.setCpuNode(value);
                             } else {
-                                System.err.println("Something is not right!");
+                                System.err.println("Something is not right! " + stringTime);
                             }
                         }
                     } else {
-                        System.err.println("Something is not right!");
+                        // Memory
+                        if (descriptionId == Constants.memoryDescriptionId) {
+                            if (resourceId == Constants.podId) {
+                                score.setMemoryPod(value);
+                            } else {
+                                if (resourceId == Constants.nodeId) {
+                                    score.setMemoryNode(value);
+                                } else {
+                                    System.err.println("Something is not right! " + stringTime);
+                                }
+                            }
+                        } else {
+                            System.err.println("Something is not right! " + stringTime);
+                        }
                     }
-                }
-                valueTime = rs.getObject("valueTime").toString();
-            }
+                    valueTime = rs.getObject("valueTime").toString();
+                } while (rs.next());
 
-            System.out.println(valueTime + ": " + score.toString());
+                System.out.println(valueTime + ": " + score.toString());
+                System.out.println("Score: " + score.getScore());
+            } else {
+                System.out.println("No data on: " + stringTime);
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }

@@ -41,9 +41,16 @@ public class Score {
     
     @Override
     public String toString() {
-      return "Score [cpuPod: " + this.getCpuPod() + 
-    		  ", memoryPod: " + this.getMemoryPod() + 
-    		  ", cpuNode: " + this.getCpuNode() + 
-    		  ", memoryNode: " + this.getMemoryNode() + "]";
+        return "Score [cpuPod: " + this.getCpuPod() +
+              ", memoryPod: " + this.getMemoryPod() +
+              ", cpuNode: " + this.getCpuNode() +
+              ", memoryNode: " + this.getMemoryNode() + "]";
+    }
+
+    public Double getScore() {
+        Double a1 = this.getCpuPod() / this.getCpuNode();
+        Double a2 = this.getMemoryPod() / this.getMemoryNode();
+        Double score = 0.5 * a1 + 0.5 * a2;
+        return score;
     }
 }
