@@ -11,7 +11,7 @@ public class Main {
         DataManager dataManager = new DataManager();
 
         System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score");
-        for (int i = 0; i < 60; i++) {
+        for (int i = 0; i < 240; i++) {
             Date date = new Date(118, 8, 20, 11, 10 + i);
 
             SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm");

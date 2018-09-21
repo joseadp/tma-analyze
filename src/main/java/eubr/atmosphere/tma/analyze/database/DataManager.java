@@ -1,5 +1,6 @@
 package eubr.atmosphere.tma.analyze.database;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -9,6 +10,12 @@ import eubr.atmosphere.tma.analyze.utils.Constants;
 
 public class DataManager {
 
+	private Connection connection = DatabaseManager.getConnectionInstance();
+
+	public DataManager() {
+		this.connection = DatabaseManager.getConnectionInstance();
+	}
+
     public Score getData(String stringTime) {
         String sql = "select * from Data "
                 + "where "
@@ -17,8 +24,7 @@ public class DataManager {
         Score score = null;
 
         try {
-            PreparedStatement ps =
-                    DatabaseManager.getConnectionInstance().prepareStatement(sql);
+            PreparedStatement ps = this.connection.prepareStatement(sql);
             ps.setString(1, stringTime);
             ResultSet rs = DatabaseManager.executeQuery(ps);
 
