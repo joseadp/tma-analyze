@@ -4,17 +4,19 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import eubr.atmosphere.tma.analyze.Score;
 import eubr.atmosphere.tma.analyze.utils.Constants;
 
 public class DataManager {
 
-	private Connection connection = DatabaseManager.getConnectionInstance();
+    private Connection connection = DatabaseManager.getConnectionInstance();
 
-	public DataManager() {
-		this.connection = DatabaseManager.getConnectionInstance();
-	}
+    public DataManager() {
+        this.connection = DatabaseManager.getConnectionInstance();
+    }
 
     public Score getData(String stringTime) {
         String sql = "select * from Data "
@@ -72,5 +74,36 @@ public class DataManager {
             e.printStackTrace();
         }
         return score;
+    }
+
+    public List<Double> getValuesPeriod(String initialDateTime, String finalDateTime,
+            int descriptionId, int resourceId) {
+        String sql = "select * from Data "
+                + "where "
+                + "valueTime between ? and ? and "
+                + "descriptionId = ? and "
+                + "resourceId = ? "
+                + "order by valueTime;";
+
+        List<Double> values = new ArrayList<Double>();
+
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(sql);
+            ps.setString(1, initialDateTime);
+            ps.setString(2, finalDateTime);
+            ps.setInt(3, descriptionId);
+            ps.setInt(4, resourceId);
+
+            ResultSet rs = DatabaseManager.executeQuery(ps);
+
+            while (rs.next()) {
+                Double value = ((Double) rs.getObject("value"));
+                System.out.println(value);
+                values.add(value);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return values;
     }
 }
