@@ -98,7 +98,6 @@ public class DataManager {
 
             while (rs.next()) {
                 Double value = ((Double) rs.getObject("value"));
-                System.out.println(value);
                 values.add(value);
             }
         } catch (SQLException e) {
