@@ -1,1 +1,1 @@
-docker build -t tma-analyze .
+docker build -t tma-analyze:0.1 .
