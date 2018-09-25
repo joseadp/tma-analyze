@@ -32,7 +32,6 @@ public class DataManager {
 
             if (rs.next()) {
                 score = new Score();
-                String valueTime = "";
                 do {
                     int descriptionId = ((Integer) rs.getObject("descriptionId"));
                     int resourceId = ((Integer) rs.getObject("resourceId"));
@@ -65,7 +64,7 @@ public class DataManager {
                             System.err.println("Something is not right! " + stringTime);
                         }
                     }
-                    valueTime = rs.getObject("valueTime").toString();
+                    String valueTime = rs.getObject("valueTime").toString();
                 } while (rs.next());
             } else {
                 System.out.println("No data on: " + stringTime);

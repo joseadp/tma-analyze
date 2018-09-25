@@ -35,8 +35,10 @@ public class DatabaseManager {
                 props.load(inputStream);
 
                 String connString = props.getProperty("connectionString");
+                String user = props.getProperty("user");
+                String password = props.getProperty("password");
 
-                connection = DriverManager.getConnection(connString);
+                connection = DriverManager.getConnection(connString, user, password);
             } catch (IOException e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
