@@ -61,6 +61,9 @@ public class Main {
         Calendar currentInitial = (Calendar) initialDate.clone();
         Calendar currentFinal = (Calendar) finalDate.clone();
 
+        currentInitial.add(Calendar.MINUTE, -OBSERVATION_WINDOW);
+        currentFinal.add(Calendar.MINUTE, -OBSERVATION_WINDOW);
+
         for (int i = 0; i < OBSERVATION_WINDOW; i++) {
             String strInitialDate = sdf.format(currentInitial.getTime());
             String strFinalDate = sdf.format(currentFinal.getTime());
