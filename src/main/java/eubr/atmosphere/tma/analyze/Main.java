@@ -58,51 +58,58 @@ public class Main {
     }
 
     private static void calculateScoreNormalized(DataManager dataManager) {
+        Calendar currentInitial = (Calendar) initialDate.clone();
+        Calendar currentFinal = (Calendar) finalDate.clone();
 
-        String strInitialDate = sdf.format(initialDate.getTime());
-        String strFinalDate = sdf.format(finalDate.getTime());
+        for (int i = 0; i < OBSERVATION_WINDOW; i++) {
+            String strInitialDate = sdf.format(currentInitial.getTime());
+            String strFinalDate = sdf.format(currentFinal.getTime());
 
-        List<Double> valuesCpuPod =
-                dataManager.getValuesPeriod(strInitialDate, strFinalDate,
-                Constants.cpuDescriptionId, Constants.podId);
-        List<Double> valuesCpuPodNormalized = normalizeData(valuesCpuPod);
+            List<Double> valuesCpuPod =
+                    dataManager.getValuesPeriod(strInitialDate, strFinalDate,
+                    Constants.cpuDescriptionId, Constants.podId);
+            List<Double> valuesCpuPodNormalized = normalizeData(valuesCpuPod);
 
-        List<Double> valuesMemoryPod =
-                dataManager.getValuesPeriod(strInitialDate, strFinalDate,
-                Constants.memoryDescriptionId, Constants.podId);
-        List<Double> valuesMemoryPodNormalized = normalizeData(valuesMemoryPod);
+            List<Double> valuesMemoryPod =
+                    dataManager.getValuesPeriod(strInitialDate, strFinalDate,
+                    Constants.memoryDescriptionId, Constants.podId);
+            List<Double> valuesMemoryPodNormalized = normalizeData(valuesMemoryPod);
 
-        List<Double> valuesCpuNode =
-                dataManager.getValuesPeriod(strInitialDate, strFinalDate,
-                Constants.cpuDescriptionId, Constants.nodeId);
-        List<Double> valuesCpuNodeNormalized = normalizeData(valuesCpuNode);
+            List<Double> valuesCpuNode =
+                    dataManager.getValuesPeriod(strInitialDate, strFinalDate,
+                    Constants.cpuDescriptionId, Constants.nodeId);
+            List<Double> valuesCpuNodeNormalized = normalizeData(valuesCpuNode);
 
-        List<Double> valuesMemoryNode =
-                dataManager.getValuesPeriod(strInitialDate, strFinalDate,
-                Constants.memoryDescriptionId, Constants.nodeId);
-        List<Double> valuesMemoryNodeNormalized = normalizeData(valuesMemoryNode);
+            List<Double> valuesMemoryNode =
+                    dataManager.getValuesPeriod(strInitialDate, strFinalDate,
+                    Constants.memoryDescriptionId, Constants.nodeId);
+            List<Double> valuesMemoryNodeNormalized = normalizeData(valuesMemoryNode);
 
-        ////////////////////////////////////////////////////////////////////////////////////
-        LOGGER.debug("Size CPU-Pod: " + valuesCpuPod.size());
-        LOGGER.debug("Size Memory-Pod: " + valuesMemoryPod.size());
-        LOGGER.debug("Size CPU-Node: " + valuesCpuNode.size());
-        LOGGER.debug("Size Memory-Node: " + valuesMemoryNode.size());
+            ////////////////////////////////////////////////////////////////////////////////////
+            LOGGER.debug("Size CPU-Pod: " + valuesCpuPod.size());
+            LOGGER.debug("Size Memory-Pod: " + valuesMemoryPod.size());
+            LOGGER.debug("Size CPU-Node: " + valuesCpuNode.size());
+            LOGGER.debug("Size Memory-Node: " + valuesMemoryNode.size());
 
-        ////////////////////////////////////////////////////////////////////////////////////
-        Score scoreNonNormalized = new Score();
-        scoreNonNormalized.setCpuPod(getArithmeticMean(valuesCpuPod));
-        scoreNonNormalized.setMemoryPod(getArithmeticMean(valuesMemoryPod));
-        scoreNonNormalized.setCpuNode(getArithmeticMean(valuesCpuNode));
-        scoreNonNormalized.setMemoryNode(getArithmeticMean(valuesMemoryNode));
-        System.out.println(strFinalDate + "," + scoreNonNormalized.getCsvLine() + ",timeSeriesNonNormalized");
+            ////////////////////////////////////////////////////////////////////////////////////
+            Score scoreNonNormalized = new Score();
+            scoreNonNormalized.setCpuPod(getArithmeticMean(valuesCpuPod));
+            scoreNonNormalized.setMemoryPod(getArithmeticMean(valuesMemoryPod));
+            scoreNonNormalized.setCpuNode(getArithmeticMean(valuesCpuNode));
+            scoreNonNormalized.setMemoryNode(getArithmeticMean(valuesMemoryNode));
+            System.out.println(strFinalDate + "," + scoreNonNormalized.getCsvLine() + ",timeSeriesNonNormalized");
 
-        ////////////////////////////////////////////////////////////////////////////////////
-        Score scoreNormalized = new Score();
-        scoreNormalized.setCpuPod(getArithmeticMean(valuesCpuPodNormalized));
-        scoreNormalized.setMemoryPod(getArithmeticMean(valuesMemoryPodNormalized));
-        scoreNormalized.setCpuNode(getArithmeticMean(valuesCpuNodeNormalized));
-        scoreNormalized.setMemoryNode(getArithmeticMean(valuesMemoryNodeNormalized));
-        System.out.println(strFinalDate + "," + scoreNormalized.getCsvLine() + ",timeSeriesNormalized");
+            ////////////////////////////////////////////////////////////////////////////////////
+            Score scoreNormalized = new Score();
+            scoreNormalized.setCpuPod(getArithmeticMean(valuesCpuPodNormalized));
+            scoreNormalized.setMemoryPod(getArithmeticMean(valuesMemoryPodNormalized));
+            scoreNormalized.setCpuNode(getArithmeticMean(valuesCpuNodeNormalized));
+            scoreNormalized.setMemoryNode(getArithmeticMean(valuesMemoryNodeNormalized));
+            System.out.println(strFinalDate + "," + scoreNormalized.getCsvLine() + ",timeSeriesNormalized");
+
+            currentInitial.add(Calendar.MINUTE, 1);
+            currentFinal.add(Calendar.MINUTE, 1);
+        }
     }
 
     private static List<Double> normalizeData(List<Double> values) {
