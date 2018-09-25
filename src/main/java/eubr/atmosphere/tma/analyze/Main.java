@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import eubr.atmosphere.tma.analyze.database.DataManager;
 import eubr.atmosphere.tma.analyze.utils.Constants;
 
@@ -15,8 +18,10 @@ public class Main {
 
     private static SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm");
 
-	private static Calendar initialDate;
-	private static Calendar finalDate;
+    private static Calendar initialDate;
+    private static Calendar finalDate;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
         DataManager dataManager = new DataManager();
@@ -26,10 +31,11 @@ public class Main {
             initialDate.add(Calendar.MINUTE, -OBSERVATION_WINDOW);
             finalDate = Calendar.getInstance();
 
+            System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score,type");
             calculateScoreNormalized(dataManager);
             calculateScoreNonNormalized(dataManager);
             try {
-                Thread.sleep(2000);
+                Thread.sleep(60000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -42,42 +48,45 @@ public class Main {
      * @param dataManager object used to manipulate the database
      */
     private static void calculateScoreNonNormalized(DataManager dataManager) {
-        System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score");
         for (int i = 0; i < OBSERVATION_WINDOW; i++) {
             String strDate = sdf.format(initialDate.getTime());
             Score score = dataManager.getData(strDate);
             if (score != null)
-                System.out.println(strDate + "," + score.getCsvLine());
+                System.out.println(strDate + "," + score.getCsvLine() + ",singleReading");
             initialDate.add(Calendar.MINUTE, 1);
         }
     }
 
     private static void calculateScoreNormalized(DataManager dataManager) {
+
+        String strInitialDate = sdf.format(initialDate.getTime());
+        String strFinalDate = sdf.format(finalDate.getTime());
+
         List<Double> valuesCpuPod =
-                dataManager.getValuesPeriod(sdf.format(initialDate.getTime()), sdf.format(finalDate.getTime()),
+                dataManager.getValuesPeriod(strInitialDate, strFinalDate,
                 Constants.cpuDescriptionId, Constants.podId);
         List<Double> valuesCpuPodNormalized = normalizeData(valuesCpuPod);
 
         List<Double> valuesMemoryPod =
-                dataManager.getValuesPeriod(sdf.format(initialDate.getTime()), sdf.format(finalDate.getTime()),
+                dataManager.getValuesPeriod(strInitialDate, strFinalDate,
                 Constants.memoryDescriptionId, Constants.podId);
         List<Double> valuesMemoryPodNormalized = normalizeData(valuesMemoryPod);
 
         List<Double> valuesCpuNode =
-                dataManager.getValuesPeriod(sdf.format(initialDate.getTime()), sdf.format(finalDate.getTime()),
+                dataManager.getValuesPeriod(strInitialDate, strFinalDate,
                 Constants.cpuDescriptionId, Constants.nodeId);
         List<Double> valuesCpuNodeNormalized = normalizeData(valuesCpuNode);
 
         List<Double> valuesMemoryNode =
-                dataManager.getValuesPeriod(sdf.format(initialDate.getTime()), sdf.format(finalDate.getTime()),
+                dataManager.getValuesPeriod(strInitialDate, strFinalDate,
                 Constants.memoryDescriptionId, Constants.nodeId);
         List<Double> valuesMemoryNodeNormalized = normalizeData(valuesMemoryNode);
 
         ////////////////////////////////////////////////////////////////////////////////////
-        System.out.println("Size CPU-Pod: " + valuesCpuPod.size());
-        System.out.println("Size Memory-Pod: " + valuesMemoryPod.size());
-        System.out.println("Size CPU-Node: " + valuesCpuNode.size());
-        System.out.println("Size Memory-Node: " + valuesMemoryNode.size());
+        LOGGER.debug("Size CPU-Pod: " + valuesCpuPod.size());
+        LOGGER.debug("Size Memory-Pod: " + valuesMemoryPod.size());
+        LOGGER.debug("Size CPU-Node: " + valuesCpuNode.size());
+        LOGGER.debug("Size Memory-Node: " + valuesMemoryNode.size());
 
         ////////////////////////////////////////////////////////////////////////////////////
         Score scoreNonNormalized = new Score();
@@ -85,9 +94,7 @@ public class Main {
         scoreNonNormalized.setMemoryPod(getArithmeticMean(valuesMemoryPod));
         scoreNonNormalized.setCpuNode(getArithmeticMean(valuesCpuNode));
         scoreNonNormalized.setMemoryNode(getArithmeticMean(valuesMemoryNode));
-        System.out.println(scoreNonNormalized);
-        System.out.println("Score:" + scoreNonNormalized.getScore());
-        System.out.println(scoreNonNormalized.getCsvLine());
+        System.out.println(strFinalDate + "," + scoreNonNormalized.getCsvLine() + ",timeSeriesNonNormalized");
 
         ////////////////////////////////////////////////////////////////////////////////////
         Score scoreNormalized = new Score();
@@ -95,19 +102,17 @@ public class Main {
         scoreNormalized.setMemoryPod(getArithmeticMean(valuesMemoryPodNormalized));
         scoreNormalized.setCpuNode(getArithmeticMean(valuesCpuNodeNormalized));
         scoreNormalized.setMemoryNode(getArithmeticMean(valuesMemoryNodeNormalized));
-        System.out.println(scoreNormalized);
-        System.out.println("Score:" + scoreNormalized.getScore());
-        System.out.println(scoreNormalized.getCsvLine());
+        System.out.println(strFinalDate + "," + scoreNormalized.getCsvLine() + ",timeSeriesNormalized");
     }
 
     private static List<Double> normalizeData(List<Double> valuesCpuPod) {
-        System.out.println(valuesCpuPod);
+        LOGGER.debug(valuesCpuPod.toString());
         Double mean = getArithmeticMean(valuesCpuPod);
-        System.out.println("Arithmetic Mean:" + mean);
+        LOGGER.debug("Arithmetic Mean:" + mean);
         Double standardDeviation = getStandardDeviation(valuesCpuPod, mean);
-        System.out.println("Standard Deviation:" + standardDeviation);
+        LOGGER.debug("Standard Deviation:" + standardDeviation);
         List<Double> normalizedData = getNormalizedData(valuesCpuPod, mean, standardDeviation);
-        System.out.println("Normalized Data:" + normalizedData);
+        LOGGER.debug("Normalized Data:" + normalizedData);
         return normalizedData;
     }
 
