@@ -17,6 +17,12 @@ public class Main {
 
     private static SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm");
 
+    // 2018-09-24 18:00
+    private static final int INITIAL_YEAR = 118;
+    private static final int INITIAL_MONTH = 8;
+    private static final int INITIAL_DAY = 24;
+    private static final int INITIAL_HOUR = 18;
+
     public static void main(String[] args) {
         DataManager dataManager = new DataManager();
 
@@ -39,7 +45,7 @@ public class Main {
     private static void calculateScoreNonNormalized(DataManager dataManager) {
         System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score");
         for (int i = 0; i < minutes; i++) {
-            Date date = new Date(118, 8, 20, 11, 10 + i);
+            Date date = new Date(INITIAL_YEAR, INITIAL_MONTH, INITIAL_DAY, INITIAL_HOUR, 0 + i);
             String strDate = sdf.format(date);
             Score score = dataManager.getData(strDate);
             if (score != null)
@@ -51,8 +57,10 @@ public class Main {
         /*Date initialDate = new Date(118, 8, 24, 13, 21); //2018-09-24 13:21
         Date finalDate = new Date(118, 8, 24, 13, 21 + 60);*/
 
-        Date initialDate = new Date(118, 8, 20, 13, 04); //2018-09-24 13:21
-        Date finalDate = new Date(118, 8, 20, 13, 04 + OBSERVATION_WINDOW);
+        Date initialDate = new Date(INITIAL_YEAR, INITIAL_MONTH, INITIAL_DAY,
+                INITIAL_HOUR, 0);
+        Date finalDate = new Date(INITIAL_YEAR, INITIAL_MONTH, INITIAL_DAY,
+                INITIAL_HOUR, 0 + OBSERVATION_WINDOW);
 
         List<Double> valuesCpuPod =
                 dataManager.getValuesPeriod(sdf.format(initialDate), sdf.format(finalDate),
