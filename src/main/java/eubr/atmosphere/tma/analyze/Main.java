@@ -105,13 +105,13 @@ public class Main {
         System.out.println(strFinalDate + "," + scoreNormalized.getCsvLine() + ",timeSeriesNormalized");
     }
 
-    private static List<Double> normalizeData(List<Double> valuesCpuPod) {
-        LOGGER.debug(valuesCpuPod.toString());
-        Double mean = getArithmeticMean(valuesCpuPod);
+    private static List<Double> normalizeData(List<Double> values) {
+        LOGGER.debug(values.toString());
+        Double mean = getArithmeticMean(values);
         LOGGER.debug("Arithmetic Mean:" + mean);
-        Double standardDeviation = getStandardDeviation(valuesCpuPod, mean);
+        Double standardDeviation = getStandardDeviation(values, mean);
         LOGGER.debug("Standard Deviation:" + standardDeviation);
-        List<Double> normalizedData = getNormalizedData(valuesCpuPod, mean, standardDeviation);
+        List<Double> normalizedData = getNormalizedData(values, mean, standardDeviation);
         LOGGER.debug("Normalized Data:" + normalizedData);
         return normalizedData;
     }
