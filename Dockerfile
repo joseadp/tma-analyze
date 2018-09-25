@@ -12,6 +12,6 @@ COPY    pom.xml     ${analyze}/tma-analyze/pom.xml
 COPY    src ${analyze}/tma-analyze/src
 RUN     ["mvn", "install"]
 
-RUN     ["cp", "-r", "target", "/atmosphere/tma/analyze/bin"]
+RUN     ["cp", "-r", "bin", "/atmosphere/tma/analyze/bin"]
 
 CMD ["java", "-jar", "/atmosphere/tma/analyze/bin/tma-analyze-0.0.1-SNAPSHOT.jar"]
