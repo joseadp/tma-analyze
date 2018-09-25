@@ -10,8 +10,6 @@ import eubr.atmosphere.tma.analyze.utils.Constants;
 
 public class Main {
 
-    private final static int minutes = 240;
-
     /** OBSERVATION_WINDOW: window that the readings will be used to calculate the score (in minutes) */
     private static int OBSERVATION_WINDOW = 20;
 
@@ -45,7 +43,7 @@ public class Main {
      */
     private static void calculateScoreNonNormalized(DataManager dataManager) {
         System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score");
-        for (int i = 0; i < minutes; i++) {
+        for (int i = 0; i < OBSERVATION_WINDOW; i++) {
             String strDate = sdf.format(initialDate.getTime());
             Score score = dataManager.getData(strDate);
             if (score != null)
