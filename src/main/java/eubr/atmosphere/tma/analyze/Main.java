@@ -2,7 +2,7 @@ package eubr.atmosphere.tma.analyze;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Calendar;
 import java.util.List;
 
 import eubr.atmosphere.tma.analyze.database.DataManager;
@@ -17,18 +17,19 @@ public class Main {
 
     private static SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm");
 
-    // 2018-09-24 18:00
-    private static final int INITIAL_YEAR = 118;
-    private static final int INITIAL_MONTH = 8;
-    private static final int INITIAL_DAY = 24;
-    private static final int INITIAL_HOUR = 18;
+	private static Calendar initialDate;
+	private static Calendar finalDate;
 
     public static void main(String[] args) {
         DataManager dataManager = new DataManager();
 
         for (int i = 0; i < 60; i++) {
-            calculateScoreNonNormalized(dataManager);
+            initialDate = Calendar.getInstance();
+            initialDate.add(Calendar.MINUTE, -OBSERVATION_WINDOW);
+            finalDate = Calendar.getInstance();
+
             calculateScoreNormalized(dataManager);
+            calculateScoreNonNormalized(dataManager);
             try {
                 Thread.sleep(2000);
             } catch (InterruptedException e) {
@@ -45,40 +46,32 @@ public class Main {
     private static void calculateScoreNonNormalized(DataManager dataManager) {
         System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score");
         for (int i = 0; i < minutes; i++) {
-            Date date = new Date(INITIAL_YEAR, INITIAL_MONTH, INITIAL_DAY, INITIAL_HOUR, 0 + i);
-            String strDate = sdf.format(date);
+            String strDate = sdf.format(initialDate.getTime());
             Score score = dataManager.getData(strDate);
             if (score != null)
                 System.out.println(strDate + "," + score.getCsvLine());
+            initialDate.add(Calendar.MINUTE, 1);
         }
     }
 
     private static void calculateScoreNormalized(DataManager dataManager) {
-        /*Date initialDate = new Date(118, 8, 24, 13, 21); //2018-09-24 13:21
-        Date finalDate = new Date(118, 8, 24, 13, 21 + 60);*/
-
-        Date initialDate = new Date(INITIAL_YEAR, INITIAL_MONTH, INITIAL_DAY,
-                INITIAL_HOUR, 0);
-        Date finalDate = new Date(INITIAL_YEAR, INITIAL_MONTH, INITIAL_DAY,
-                INITIAL_HOUR, 0 + OBSERVATION_WINDOW);
-
         List<Double> valuesCpuPod =
-                dataManager.getValuesPeriod(sdf.format(initialDate), sdf.format(finalDate),
+                dataManager.getValuesPeriod(sdf.format(initialDate.getTime()), sdf.format(finalDate.getTime()),
                 Constants.cpuDescriptionId, Constants.podId);
         List<Double> valuesCpuPodNormalized = normalizeData(valuesCpuPod);
 
         List<Double> valuesMemoryPod =
-                dataManager.getValuesPeriod(sdf.format(initialDate), sdf.format(finalDate),
+                dataManager.getValuesPeriod(sdf.format(initialDate.getTime()), sdf.format(finalDate.getTime()),
                 Constants.memoryDescriptionId, Constants.podId);
         List<Double> valuesMemoryPodNormalized = normalizeData(valuesMemoryPod);
 
         List<Double> valuesCpuNode =
-                dataManager.getValuesPeriod(sdf.format(initialDate), sdf.format(finalDate),
+                dataManager.getValuesPeriod(sdf.format(initialDate.getTime()), sdf.format(finalDate.getTime()),
                 Constants.cpuDescriptionId, Constants.nodeId);
         List<Double> valuesCpuNodeNormalized = normalizeData(valuesCpuNode);
 
         List<Double> valuesMemoryNode =
-                dataManager.getValuesPeriod(sdf.format(initialDate), sdf.format(finalDate),
+                dataManager.getValuesPeriod(sdf.format(initialDate.getTime()), sdf.format(finalDate.getTime()),
                 Constants.memoryDescriptionId, Constants.nodeId);
         List<Double> valuesMemoryNodeNormalized = normalizeData(valuesMemoryNode);
 
