@@ -23,13 +23,6 @@ public class KafkaManager {
 
     public KafkaManager() {
         this.producer = createProducer();
-
-        try {
-            runProducer(5);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
     }
 
     public void addItemKafka(Score score) throws InterruptedException, ExecutionException {
