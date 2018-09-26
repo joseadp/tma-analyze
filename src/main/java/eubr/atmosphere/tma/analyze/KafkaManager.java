@@ -28,7 +28,7 @@ public class KafkaManager {
     public void addItemKafka(Score score) throws InterruptedException, ExecutionException {
         long time = System.currentTimeMillis();
         final ProducerRecord<Long, String> record =
-                new ProducerRecord<>(TOPIC, time, "Score " + score.getCsvLine());
+                new ProducerRecord<>(TOPIC, time, score.getScore().toString());
         RecordMetadata metadata = this.producer.send(record).get();
         long elapsedTime = System.currentTimeMillis() - time;
         System.out.printf("sent record(key=%s value=%s) " +
