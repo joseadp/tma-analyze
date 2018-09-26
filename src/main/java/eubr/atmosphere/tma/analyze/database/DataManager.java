@@ -7,12 +7,17 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import eubr.atmosphere.tma.analyze.Score;
 import eubr.atmosphere.tma.analyze.utils.Constants;
 
 public class DataManager {
 
     private Connection connection = DatabaseManager.getConnectionInstance();
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataManager.class);
 
     public DataManager() {
         this.connection = DatabaseManager.getConnectionInstance();
@@ -45,7 +50,7 @@ public class DataManager {
                             if (resourceId == Constants.nodeId) {
                                 score.setCpuNode(value);
                             } else {
-                                System.err.println("Something is not right! " + stringTime);
+                                LOGGER.debug("Something is not right! " + stringTime);
                             }
                         }
                     } else {
@@ -57,11 +62,11 @@ public class DataManager {
                                 if (resourceId == Constants.nodeId) {
                                     score.setMemoryNode(value);
                                 } else {
-                                    System.err.println("Something is not right! " + stringTime);
+                                    LOGGER.debug("Something is not right! " + stringTime);
                                 }
                             }
                         } else {
-                            System.err.println("Something is not right! " + stringTime);
+                            LOGGER.debug("Something is not right! " + stringTime);
                         }
                     }
                     String valueTime = rs.getObject("valueTime").toString();
