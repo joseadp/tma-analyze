@@ -21,10 +21,13 @@ public class Main {
     private static Calendar initialDate;
     private static Calendar finalDate;
 
+    private static KafkaManager kafkaManager;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
         DataManager dataManager = new DataManager();
+        kafkaManager = new KafkaManager();
 
         for (int i = 0; i < 60; i++) {
             initialDate = Calendar.getInstance();
@@ -51,8 +54,10 @@ public class Main {
         for (int i = 0; i < OBSERVATION_WINDOW; i++) {
             String strDate = sdf.format(initialDate.getTime());
             Score score = dataManager.getData(strDate);
-            if (score != null)
+            if (score != null) {
                 System.out.println(strDate + "," + score.getCsvLine() + ",singleReading");
+                kafkaManager.addItemKafka(score);
+            }
             initialDate.add(Calendar.MINUTE, 1);
         }
     }
