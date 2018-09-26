@@ -27,7 +27,6 @@ public class Main {
 
     public static void main(String[] args) {
         DataManager dataManager = new DataManager();
-        kafkaManager = new KafkaManager();
 
         for (int i = 0; i < 60; i++) {
             initialDate = Calendar.getInstance();
@@ -42,6 +41,7 @@ public class Main {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            kafkaManager = new KafkaManager();
         }
     }
 
