@@ -11,11 +11,13 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import eubr.atmosphere.tma.analyze.utils.PropertiesManager;
+
 public class KafkaManager {
 
     private final static String TOPIC = "topic-planning";
     private final static String BOOTSTRAP_SERVERS =
-            "kafka-0.kafka-hs.default.svc.cluster.local:9093";
+            PropertiesManager.getInstance().getProperty("bootstrapServers");
 
     final Producer<Long, String> producer;
 

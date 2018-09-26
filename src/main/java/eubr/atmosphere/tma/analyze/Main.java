@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +57,13 @@ public class Main {
             Score score = dataManager.getData(strDate);
             if (score != null) {
                 System.out.println(strDate + "," + score.getCsvLine() + ",singleReading");
-                kafkaManager.addItemKafka(score);
+                try {
+                    kafkaManager.addItemKafka(score);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
+                }
             }
             initialDate.add(Calendar.MINUTE, 1);
         }

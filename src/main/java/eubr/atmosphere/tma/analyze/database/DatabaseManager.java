@@ -1,14 +1,13 @@
 package eubr.atmosphere.tma.analyze.database;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Properties;
+
+import eubr.atmosphere.tma.analyze.utils.PropertiesManager;
 
 public class DatabaseManager {
     private static Connection connection = null;
@@ -25,24 +24,11 @@ public class DatabaseManager {
 
         // Setup the connection with the DB
         try {
+            String connString = PropertiesManager.getInstance().getProperty("connectionString");
+            String user = PropertiesManager.getInstance().getProperty("user");
+            String password = PropertiesManager.getInstance().getProperty("password");
 
-            try {
-                //or shortcut version
-                InputStream inputStream = DatabaseManager.class.getResourceAsStream("/environment.properties");
-
-                //now can use this input stream as usually, i.e. to load as properties
-                Properties props = new Properties();
-                props.load(inputStream);
-
-                String connString = props.getProperty("connectionString");
-                String user = props.getProperty("user");
-                String password = props.getProperty("password");
-
-                connection = DriverManager.getConnection(connString, user, password);
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            connection = DriverManager.getConnection(connString, user, password);
         } catch (SQLException e) {
             e.printStackTrace();
         }
