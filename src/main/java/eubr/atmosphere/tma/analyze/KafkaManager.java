@@ -1,8 +1,13 @@
 package eubr.atmosphere.tma.analyze;
 
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
-import org.apache.kafka.clients.producer.*;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
@@ -12,7 +17,11 @@ public class KafkaManager {
     private final static String BOOTSTRAP_SERVERS =
             "kafka-0.kafka-hs.default.svc.cluster.local:9093";
 
+    final Producer<Long, String> producer;
+
     public KafkaManager() {
+        this.producer = createProducer();
+
         try {
             runProducer(5);
         } catch (Exception e) {
@@ -21,12 +30,20 @@ public class KafkaManager {
         }
     }
 
-    public void addItemKafka(Score score) {
-
+    public void addItemKafka(Score score) throws InterruptedException, ExecutionException {
+        long time = System.currentTimeMillis();
+        final ProducerRecord<Long, String> record =
+                new ProducerRecord<>(TOPIC, time, "Score " + score.getCsvLine());
+        RecordMetadata metadata = this.producer.send(record).get();
+        long elapsedTime = System.currentTimeMillis() - time;
+        System.out.printf("sent record(key=%s value=%s) " +
+                        "meta(partition=%d, offset=%d) time=%d\n",
+                record.key(), record.value(), metadata.partition(),
+                metadata.offset(), elapsedTime);
+        this.producer.flush();
     }
 
-    private static Producer<Long, String> createProducer() {
-
+    private Producer<Long, String> createProducer() {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
                                             BOOTSTRAP_SERVERS);
@@ -39,9 +56,7 @@ public class KafkaManager {
     }
 
     // TODO: THIS IS SYNCHRONOUS! I NEED TO CHECK IF THE ASYNCHRONOUS OPTION IS BETTER FOR US
-    static void runProducer(final int sendMessageCount) throws Exception {
-
-        final Producer<Long, String> producer = createProducer();
+    private void runProducer(final int sendMessageCount) throws Exception {
         long time = System.currentTimeMillis();
 
         try {
@@ -49,7 +64,7 @@ public class KafkaManager {
                 final ProducerRecord<Long, String> record =
                         new ProducerRecord<>(TOPIC, index,
                                     "Hello Mom " + index);
-                RecordMetadata metadata = producer.send(record).get();
+                RecordMetadata metadata = this.producer.send(record).get();
                 long elapsedTime = System.currentTimeMillis() - time;
                 System.out.printf("sent record(key=%s value=%s) " +
                                 "meta(partition=%d, offset=%d) time=%d\n",
@@ -57,8 +72,8 @@ public class KafkaManager {
                         metadata.offset(), elapsedTime);
             }
         } finally {
-            producer.flush();
-            producer.close();
+            this.producer.flush();
+            this.producer.close();
         }
     }
 }
