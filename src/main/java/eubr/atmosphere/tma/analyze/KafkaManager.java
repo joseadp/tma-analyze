@@ -11,6 +11,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import eubr.atmosphere.tma.utils.Score;
 import eubr.atmosphere.tma.analyze.utils.PropertiesManager;
 
 public class KafkaManager {

@@ -9,6 +9,7 @@ import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eubr.atmosphere.tma.utils.Score;
 import eubr.atmosphere.tma.analyze.database.DataManager;
 import eubr.atmosphere.tma.analyze.utils.Constants;
 

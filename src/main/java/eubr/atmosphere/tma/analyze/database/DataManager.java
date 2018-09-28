@@ -10,7 +10,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eubr.atmosphere.tma.analyze.Score;
+import eubr.atmosphere.tma.utils.Score;
 import eubr.atmosphere.tma.analyze.utils.Constants;
 
 public class DataManager {

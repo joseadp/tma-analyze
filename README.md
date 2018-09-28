@@ -2,6 +2,12 @@
 
 This is a simple module to calculate the score of the metrics from Kubernetes.
 
+## Prerequisites
+
+This component requires the software available in [tma-utils](https://github.com/joseadp/tma-utils).
+
+## Installation
+
 To build the jar, you should run the following command on the worker node:
 ```sh
 mvn -Pprod install
