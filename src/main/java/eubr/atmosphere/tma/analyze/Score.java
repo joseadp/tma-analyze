@@ -61,4 +61,9 @@ public class Score {
             "," + this.getMemoryNode().toString() +
             "," + this.getScore().toString();
     }
+
+    public boolean isValid() {
+         return this.getCpuNode()!= null && this.getCpuPod()!= null &&
+                 this.getMemoryNode()!= null && this.getMemoryPod()!= null;
+    }
 }

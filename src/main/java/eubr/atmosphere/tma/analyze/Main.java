@@ -55,7 +55,7 @@ public class Main {
         for (int i = 0; i < OBSERVATION_WINDOW; i++) {
             String strDate = sdf.format(initialDate.getTime());
             Score score = dataManager.getData(strDate);
-            if (score != null) {
+            if (score != null && score.isValid()) {
                 System.out.println(strDate + "," + score.getCsvLine() + ",singleReading");
                 try {
                     kafkaManager.addItemKafka(score);
