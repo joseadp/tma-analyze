@@ -11,6 +11,9 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.serialization.LongSerializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+
 import eubr.atmosphere.tma.utils.Score;
 import eubr.atmosphere.tma.analyze.utils.PropertiesManager;
 
@@ -28,8 +31,9 @@ public class KafkaManager {
 
     public void addItemKafka(Score score) throws InterruptedException, ExecutionException {
         long time = System.currentTimeMillis();
+        JsonElement jsonElement = new Gson().toJsonTree(score);
         final ProducerRecord<Long, String> record =
-                new ProducerRecord<>(TOPIC, time, score.getScore().toString());
+                new ProducerRecord<>(TOPIC, time, jsonElement.toString());
         RecordMetadata metadata = this.producer.send(record).get();
         long elapsedTime = System.currentTimeMillis() - time;
         System.out.printf("sent record(key=%s value=%s) " +
