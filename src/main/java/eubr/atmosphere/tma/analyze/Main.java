@@ -31,7 +31,7 @@ public class Main {
         DataManager dataManager = new DataManager();
         kafkaManager = new KafkaManager();
 
-        for (int i = 0; i < 60; i++) {
+        while (true) {
             initialDate = Calendar.getInstance();
             initialDate.add(Calendar.MINUTE, -OBSERVATION_WINDOW);
             finalDate = Calendar.getInstance();
