@@ -48,7 +48,10 @@ public class DataManager {
                             score.setCpuPod(value);
                         } else {
                             if (resourceId == Constants.nodeId) {
-                                score.setCpuNode(value);
+                                // score.setCpuNode(value);
+                                // However, it was decided to change the score to use the maximum of the CPU capacity.
+                                // This way, we will know how much CPU the pod is using
+                                score.setCpuNode(Constants.maxCPU);
                             } else {
                                 LOGGER.debug("Something is not right! " + stringTime);
                             }
@@ -60,7 +63,11 @@ public class DataManager {
                                 score.setMemoryPod(value);
                             } else {
                                 if (resourceId == Constants.nodeId) {
-                                    score.setMemoryNode(value);
+                                    // It is necessary to divide per 1024 to convert from bytes to Mi.
+                                    // score.setMemoryNode(value / 1024);
+                                    // However, it was decided to change the score to use the maximum of the memory capacity.
+                                    // This way, we will know how much MEmory the pod is using
+                                    score.setMemoryNode(Constants.maxMemory);
                                 } else {
                                     LOGGER.debug("Something is not right! " + stringTime);
                                 }
