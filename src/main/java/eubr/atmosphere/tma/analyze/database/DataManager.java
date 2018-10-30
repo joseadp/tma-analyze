@@ -60,13 +60,14 @@ public class DataManager {
                         // Memory
                         if (descriptionId == Constants.memoryDescriptionId) {
                             if (resourceId == Constants.podId) {
-                                score.setMemoryPod(value);
+                                // It is needed to convert from bytes to Mi
+                                score.setMemoryPod(value / 1024);
                             } else {
                                 if (resourceId == Constants.nodeId) {
                                     // It is necessary to divide per 1024 to convert from bytes to Mi.
                                     // score.setMemoryNode(value / 1024);
                                     // However, it was decided to change the score to use the maximum of the memory capacity.
-                                    // This way, we will know how much MEmory the pod is using
+                                    // This way, we will know how much Memory the pod is using
                                     score.setMemoryNode(Constants.maxMemory);
                                 } else {
                                     LOGGER.debug("Something is not right! " + stringTime);
