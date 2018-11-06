@@ -10,7 +10,7 @@ public final class Constants {
     public static final int memoryDescriptionId = 28;
 
     //public static final int podId = 8; // kafka
-    public static final int podId = 10; // wildfly-0
+    public static final int podId = 9; // wildfly-0
     public static final int nodeId = 11; // worker node
 
     // Metrics related to the node
