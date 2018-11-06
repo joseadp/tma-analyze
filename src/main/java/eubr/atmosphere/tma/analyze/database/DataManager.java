@@ -37,6 +37,8 @@ public class DataManager {
 
             if (rs.next()) {
                 score = new Score();
+                int cpuCount = 0;
+                int memoryCount = 0;
                 do {
                     int descriptionId = ((Integer) rs.getObject("descriptionId"));
                     int resourceId = ((Integer) rs.getObject("resourceId"));
@@ -44,8 +46,9 @@ public class DataManager {
                     Double value = ((Double) rs.getObject("value"));
 
                     if (descriptionId == Constants.cpuDescriptionId) {
-                        if (resourceId == Constants.podId) {
-                            score.setCpuPod(value);
+                        if (isMonitorizedPod(resourceId)) {
+                            score.setCpuPod(score.getCpuPod() + value);
+                            cpuCount++;
                         } else {
                             if (resourceId == Constants.nodeId) {
                                 // score.setCpuNode(value);
@@ -59,9 +62,10 @@ public class DataManager {
                     } else {
                         // Memory
                         if (descriptionId == Constants.memoryDescriptionId) {
-                            if (resourceId == Constants.podId) {
+                            if (isMonitorizedPod(resourceId)) {
                                 // It is needed to convert from bytes to Mi
-                                score.setMemoryPod(value / 1024);
+                                score.setMemoryPod(score.getMemoryPod() + value / 1024);
+                                memoryCount++;
                             } else {
                                 if (resourceId == Constants.nodeId) {
                                     // It is necessary to divide per 1024 to convert from bytes to Mi.
@@ -79,6 +83,18 @@ public class DataManager {
                     }
                     String valueTime = rs.getObject("valueTime").toString();
                 } while (rs.next());
+
+                LOGGER.debug("cpuCount: {} / memoryCount: {}", cpuCount, memoryCount);
+
+                // It calculate the average of the metrics of the monitorized pods
+                if (cpuCount > 0) {
+                    score.setCpuPod(score.getCpuPod() / cpuCount);
+                }
+
+                if (memoryCount > 0) {
+                    score.setMemoryPod(score.getMemoryPod() / memoryCount);
+                }
+
             } else {
                 System.out.println("No data on: " + stringTime);
             }
@@ -86,6 +102,10 @@ public class DataManager {
             e.printStackTrace();
         }
         return score;
+    }
+
+    public boolean isMonitorizedPod(int podId) {
+        return Constants.monitorizedPods.contains(podId);
     }
 
     public List<Double> getValuesPeriod(String initialDateTime, String finalDateTime,

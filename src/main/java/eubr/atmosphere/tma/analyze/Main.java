@@ -37,7 +37,7 @@ public class Main {
             finalDate = Calendar.getInstance();
 
             System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score,type");
-            calculateScoreNormalized(dataManager);
+            //calculateScoreNormalized(dataManager);
             calculateScoreNonNormalized(dataManager);
             try {
                 Thread.sleep(60000);
