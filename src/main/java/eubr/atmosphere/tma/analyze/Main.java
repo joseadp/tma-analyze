@@ -16,7 +16,7 @@ import eubr.atmosphere.tma.analyze.utils.Constants;
 public class Main {
 
     /** OBSERVATION_WINDOW: window that the readings will be used to calculate the score (in minutes) */
-    private static int OBSERVATION_WINDOW = 20;
+    private static int OBSERVATION_WINDOW = 3;
 
     private static SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm");
 
