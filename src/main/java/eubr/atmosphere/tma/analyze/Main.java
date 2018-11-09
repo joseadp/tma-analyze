@@ -56,6 +56,7 @@ public class Main {
         for (int i = 0; i < OBSERVATION_WINDOW; i++) {
             String strDate = sdf.format(initialDate.getTime());
             Score score = dataManager.getData(strDate);
+            score.setTimestamp(initialDate.getTimeInMillis());
             if (score != null && score.isValid()) {
                 System.out.println(strDate + "," + score.getCsvLine() + ",singleReading");
                 try {
