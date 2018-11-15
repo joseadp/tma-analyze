@@ -17,6 +17,7 @@ public class Main {
 
     /** OBSERVATION_WINDOW: window that the readings will be used to calculate the score (in minutes) */
     private static int OBSERVATION_WINDOW = 1;
+    private static int OBSERVATION_WINDOW_SECONDS = 30;
 
     private static SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm");
 
@@ -33,7 +34,7 @@ public class Main {
 
         while (true) {
             initialDate = Calendar.getInstance();
-            initialDate.add(Calendar.MINUTE, -OBSERVATION_WINDOW);
+            initialDate.add(Calendar.SECOND, -OBSERVATION_WINDOW_SECONDS);
             finalDate = Calendar.getInstance();
 
             System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score,type");
@@ -53,21 +54,18 @@ public class Main {
      * @param dataManager object used to manipulate the database
      */
     private static void calculateScoreNonNormalized(DataManager dataManager) {
-        for (int i = 0; i < OBSERVATION_WINDOW; i++) {
-            String strDate = sdf.format(initialDate.getTime());
-            Score score = dataManager.getData(strDate);
-            if (score != null && score.isValid()) {
-                score.setTimestamp(initialDate.getTimeInMillis());
-                System.out.println(strDate + "," + score.getCsvLine() + ",singleReading");
-                try {
-                    kafkaManager.addItemKafka(score);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
+        String strDate = sdf.format(initialDate.getTime());
+        Score score = dataManager.getData(strDate);
+        if (score != null && score.isValid()) {
+            score.setTimestamp(initialDate.getTimeInMillis());
+            System.out.println(strDate + "," + score.getCsvLine() + ",singleReading");
+            try {
+                kafkaManager.addItemKafka(score);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
             }
-            initialDate.add(Calendar.MINUTE, 1);
         }
     }
 
