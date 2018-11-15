@@ -27,7 +27,7 @@ public class DataManager {
         String sql = "select * from Data "
                 + "where "
                 + "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i\") = ? "
-                + "order by valueTime;";
+                + "order by valueTime desc;";
         Score score = null;
 
         try {
