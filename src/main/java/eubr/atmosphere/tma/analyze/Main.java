@@ -41,7 +41,7 @@ public class Main {
             //calculateScoreNormalized(dataManager);
             calculateScoreNonNormalized(dataManager);
             try {
-                Thread.sleep(30000);
+                Thread.sleep(5000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
