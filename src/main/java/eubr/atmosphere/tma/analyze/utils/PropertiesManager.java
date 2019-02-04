@@ -10,7 +10,7 @@ public class PropertiesManager {
     private static Properties props = null;
 
     private PropertiesManager() {
-        InputStream inputStream = PropertiesManager.class.getResourceAsStream("/environment.properties");
+        InputStream inputStream = PropertiesManager.class.getResourceAsStream("/environment.prod.properties");
         props = new Properties();
         try {
             props.load(inputStream);

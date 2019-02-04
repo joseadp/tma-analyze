@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import eubr.atmosphere.tma.utils.Score;
 import eubr.atmosphere.tma.analyze.database.DataManager;
 import eubr.atmosphere.tma.analyze.utils.Constants;
+import eubr.atmosphere.tma.analyze.utils.KubernetesManager;
 
 public class Main {
 
@@ -58,6 +59,7 @@ public class Main {
         Score score = dataManager.getData(strDate);
         if (score != null && score.isValid()) {
             score.setTimestamp(initialDate.getTimeInMillis());
+            score.setPodCount(KubernetesManager.getReplicas("wildfly"));
             System.out.println(strDate + "," + score.getCsvLine() + ",singleReading");
             try {
                 kafkaManager.addItemKafka(score);
