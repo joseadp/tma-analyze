@@ -28,13 +28,21 @@ public class DataManager {
                 + "where "
                 + "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i\") = ? "
                 + "order by valueTime desc;";
-        Score score = null;
+        if (this.connection != null) {
+            return executeQuery(stringTime, sql);
+        } else {
+        	LOGGER.error("The connection is null!");
+        	return null;
+        }
+    }
 
+    private Score executeQuery(String stringTime, String sql) {
+    	Score score = null;
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             ps.setString(1, stringTime);
             ResultSet rs = DatabaseManager.executeQuery(ps);
-
+    
             if (rs.next()) {
                 score = new Score();
                 int cpuCount = 0;
@@ -42,9 +50,9 @@ public class DataManager {
                 do {
                     int descriptionId = ((Integer) rs.getObject("descriptionId"));
                     int resourceId = ((Integer) rs.getObject("resourceId"));
-
+    
                     Double value = ((Double) rs.getObject("value"));
-
+    
                     if (descriptionId == Constants.cpuDescriptionId) {
                         if (isMonitorizedPod(resourceId)) {
                             score.setCpuPod(score.getCpuPod() + value);
@@ -81,23 +89,24 @@ public class DataManager {
                             LOGGER.debug("Something is not right! " + stringTime);
                         }
                     }
-                    String valueTime = rs.getObject("valueTime").toString();
+                    //String valueTime = rs.getObject("valueTime").toString();
                 } while (rs.next());
-
+    
                 LOGGER.debug("cpuCount: {} / memoryCount: {}", cpuCount, memoryCount);
-
+    
                 // It calculate the average of the metrics of the monitorized pods
                 if (cpuCount > 0) {
                     score.setCpuPod(score.getCpuPod() / cpuCount);
                 }
-
+    
                 if (memoryCount > 0) {
                     score.setMemoryPod(score.getMemoryPod() / memoryCount);
                 }
-
+    
             } else {
-                System.out.println("No data on: " + stringTime);
+                LOGGER.info("No data on: " + stringTime);
             }
+            return score;
         } catch (SQLException e) {
             e.printStackTrace();
         }

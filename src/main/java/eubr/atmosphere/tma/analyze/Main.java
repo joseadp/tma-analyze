@@ -22,9 +22,6 @@ public class Main {
 
     private static SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm");
 
-    private static Calendar initialDate;
-    private static Calendar finalDate;
-
     private static KafkaManager kafkaManager;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
@@ -34,13 +31,13 @@ public class Main {
         kafkaManager = new KafkaManager();
 
         while (true) {
-            initialDate = Calendar.getInstance();
+        	Calendar initialDate = Calendar.getInstance();
             initialDate.add(Calendar.SECOND, -OBSERVATION_WINDOW_SECONDS);
-            finalDate = Calendar.getInstance();
+            Calendar finalDate = Calendar.getInstance();
 
             System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score,type");
-            //calculateScoreNormalized(dataManager);
-            calculateScoreNonNormalized(dataManager);
+            //calculateScoreNormalized(dataManager, initialDate, finalDate);
+            calculateScoreNonNormalized(dataManager, initialDate);
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
@@ -53,8 +50,9 @@ public class Main {
      * Calculates the score without normalizing the data in advance.
      * It assumes that the value is already the mean of the last minute.
      * @param dataManager object used to manipulate the database
+     * @param initialDate initial date of the search
      */
-    private static void calculateScoreNonNormalized(DataManager dataManager) {
+    private static void calculateScoreNonNormalized(DataManager dataManager, Calendar initialDate) {
         String strDate = sdf.format(initialDate.getTime());
         Score score = dataManager.getData(strDate);
         if (score != null && score.isValid()) {
@@ -71,7 +69,7 @@ public class Main {
         }
     }
 
-    private static void calculateScoreNormalized(DataManager dataManager) {
+    private static void calculateScoreNormalized(DataManager dataManager, Calendar initialDate, Calendar finalDate) {
         Calendar currentInitial = (Calendar) initialDate.clone();
         Calendar currentFinal = (Calendar) finalDate.clone();
 
