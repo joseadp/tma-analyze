@@ -28,4 +28,10 @@ public final class Constants {
     // Metrics related to the node
     public static final Double maxCPU = 4165.0;
     public static final Double maxMemory = 7966.0;
+
+    // ProbeId of Resource Consumption (probe-k8s-metrics-server)
+    public static final int probeIdResourceConsumption = 7;
+
+    // ProbeId of Performance (client)
+    public static final int probeIdPerformance = 8;
 }

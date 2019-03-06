@@ -9,7 +9,9 @@ import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eubr.atmosphere.tma.utils.Score;
+import eubr.atmosphere.tma.utils.PerformanceScore;
+import eubr.atmosphere.tma.utils.ResourceConsumptionScore;
+import eubr.atmosphere.tma.utils.TrustworthinessScore;
 import eubr.atmosphere.tma.analyze.database.DataManager;
 import eubr.atmosphere.tma.analyze.utils.Constants;
 import eubr.atmosphere.tma.analyze.utils.KubernetesManager;
@@ -20,7 +22,7 @@ public class Main {
     private static int OBSERVATION_WINDOW = 1;
     private static int OBSERVATION_WINDOW_SECONDS = 30;
 
-    private static SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm");
+    private static SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
 
     private static KafkaManager kafkaManager;
 
@@ -33,7 +35,7 @@ public class Main {
         while (true) {
         	Calendar initialDate = Calendar.getInstance();
             initialDate.add(Calendar.SECOND, -OBSERVATION_WINDOW_SECONDS);
-            Calendar finalDate = Calendar.getInstance();
+            //Calendar finalDate = Calendar.getInstance();
 
             System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score,type");
             //calculateScoreNormalized(dataManager, initialDate, finalDate);
@@ -54,11 +56,13 @@ public class Main {
      */
     private static void calculateScoreNonNormalized(DataManager dataManager, Calendar initialDate) {
         String strDate = sdf.format(initialDate.getTime());
-        Score score = dataManager.getData(strDate);
-        if (score != null && score.isValid()) {
+        ResourceConsumptionScore resourceConsumptionScore = dataManager.getDataResourceConsumption(strDate);
+        PerformanceScore performanceScore = dataManager.getDataPerformance(strDate);
+        if (resourceConsumptionScore != null && resourceConsumptionScore.isValid()) {
+            TrustworthinessScore score = new TrustworthinessScore(resourceConsumptionScore, performanceScore);
             score.setTimestamp(initialDate.getTimeInMillis());
             score.setPodCount(KubernetesManager.getReplicas("wildfly"));
-            System.out.println(strDate + "," + score.getCsvLine() + ",singleReading");
+            System.out.println(strDate + "," + resourceConsumptionScore.getCsvLine() + ",singleReading");
             try {
                 kafkaManager.addItemKafka(score);
             } catch (InterruptedException e) {
@@ -107,7 +111,7 @@ public class Main {
             LOGGER.debug("Size Memory-Node: " + valuesMemoryNode.size());
 
             ////////////////////////////////////////////////////////////////////////////////////
-            Score scoreNonNormalized = new Score();
+            ResourceConsumptionScore scoreNonNormalized = new ResourceConsumptionScore();
             scoreNonNormalized.setCpuPod(getArithmeticMean(valuesCpuPod));
             scoreNonNormalized.setMemoryPod(getArithmeticMean(valuesMemoryPod));
             scoreNonNormalized.setCpuNode(getArithmeticMean(valuesCpuNode));
@@ -115,7 +119,7 @@ public class Main {
             System.out.println(strFinalDate + "," + scoreNonNormalized.getCsvLine() + ",timeSeriesNonNormalized");
 
             ////////////////////////////////////////////////////////////////////////////////////
-            Score scoreNormalized = new Score();
+            ResourceConsumptionScore scoreNormalized = new ResourceConsumptionScore();
             scoreNormalized.setCpuPod(getArithmeticMean(valuesCpuPodNormalized));
             scoreNormalized.setMemoryPod(getArithmeticMean(valuesMemoryPodNormalized));
             scoreNormalized.setCpuNode(getArithmeticMean(valuesCpuNodeNormalized));

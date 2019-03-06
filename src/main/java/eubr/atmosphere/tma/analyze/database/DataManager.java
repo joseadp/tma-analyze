@@ -10,7 +10,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eubr.atmosphere.tma.utils.Score;
+import eubr.atmosphere.tma.utils.PerformanceScore;
+import eubr.atmosphere.tma.utils.ResourceConsumptionScore;
 import eubr.atmosphere.tma.analyze.utils.Constants;
 
 public class DataManager {
@@ -23,40 +24,56 @@ public class DataManager {
         this.connection = DatabaseManager.getConnectionInstance();
     }
 
-    public Score getData(String stringTime) {
-        String sql = "select * from Data "
+    public ResourceConsumptionScore getDataResourceConsumption(String stringTime) {
+        String sql = "select descriptionId, resourceId, avg(value) as value from Data "
                 + "where "
-                + "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i\") = ? "
-                + "order by valueTime desc;";
+                + "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i:%s\") >= ? AND"
+                + "(probeId = ?) "
+                + "group by descriptionId, resourceId;";
         if (this.connection != null) {
-            return executeQuery(stringTime, sql);
+            return executeQueryResourceConsumption(stringTime, sql);
         } else {
-        	LOGGER.error("The connection is null!");
-        	return null;
+            LOGGER.error("The connection is null!");
+            return null;
         }
     }
 
-    private Score executeQuery(String stringTime, String sql) {
-    	Score score = null;
+    public PerformanceScore getDataPerformance(String stringTime) {
+        String sql = "select descriptionId, resourceId, avg(value) as value from Data "
+                + "where "
+                + "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i:%s\") >= ? AND"
+                + "(probeId = ?) "
+                + "group by descriptionId, resourceId;";
+        if (this.connection != null) {
+            return executeQueryPerformance(stringTime, sql);
+        } else {
+            LOGGER.error("The connection is null!");
+            return null;
+        }
+    }
+
+    private ResourceConsumptionScore executeQueryResourceConsumption(String stringTime, String sql) {
+        ResourceConsumptionScore score = null;
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             ps.setString(1, stringTime);
+            ps.setInt(2, Constants.probeIdResourceConsumption);
             ResultSet rs = DatabaseManager.executeQuery(ps);
     
             if (rs.next()) {
-                score = new Score();
+                score = new ResourceConsumptionScore();
                 int cpuCount = 0;
                 int memoryCount = 0;
                 do {
                     int descriptionId = ((Integer) rs.getObject("descriptionId"));
                     int resourceId = ((Integer) rs.getObject("resourceId"));
-    
                     Double value = ((Double) rs.getObject("value"));
-    
-                    if (descriptionId == Constants.cpuDescriptionId) {
-                        if (isMonitorizedPod(resourceId)) {
-                            score.setCpuPod(score.getCpuPod() + value);
-                            cpuCount++;
+
+                    switch (descriptionId) {
+
+                    case Constants.cpuDescriptionId:
+                        if (isMonitorizedResource(resourceId)) {
+                            score.setCpuPod(value);
                         } else {
                             if (resourceId == Constants.nodeId) {
                                 // score.setCpuNode(value);
@@ -67,42 +84,83 @@ public class DataManager {
                                 LOGGER.debug("Something is not right! " + stringTime);
                             }
                         }
-                    } else {
-                        // Memory
-                        if (descriptionId == Constants.memoryDescriptionId) {
-                            if (isMonitorizedPod(resourceId)) {
-                                // It is needed to convert from bytes to Mi
-                                score.setMemoryPod(score.getMemoryPod() + value / 1024);
-                                memoryCount++;
-                            } else {
-                                if (resourceId == Constants.nodeId) {
-                                    // It is necessary to divide per 1024 to convert from bytes to Mi.
-                                    // score.setMemoryNode(value / 1024);
-                                    // However, it was decided to change the score to use the maximum of the memory capacity.
-                                    // This way, we will know how much Memory the pod is using
-                                    score.setMemoryNode(Constants.maxMemory);
-                                } else {
-                                    LOGGER.debug("Something is not right! " + stringTime);
-                                }
-                            }
+                        break;
+
+                    case Constants.memoryDescriptionId:
+                        if (isMonitorizedResource(resourceId)) {
+                            // It is needed to convert from bytes to Mi
+                            score.setMemoryPod(value / 1024);
                         } else {
-                            LOGGER.debug("Something is not right! " + stringTime);
+                            if (resourceId == Constants.nodeId) {
+                                // It is necessary to divide per 1024 to convert from bytes to Mi.
+                                // score.setMemoryNode(value / 1024);
+                                // However, it was decided to change the score to use the maximum of the memory capacity.
+                                // This way, we will know how much Memory the pod is using
+                                score.setMemoryNode(Constants.maxMemory);
+                            } else {
+                                LOGGER.debug("Something is not right! " + stringTime);
+                            }
                         }
+                        break;
+
+                    default:
+                        LOGGER.debug("Something is not right! {}, descriptionId: {}", stringTime, descriptionId);
+                        break;
                     }
                     //String valueTime = rs.getObject("valueTime").toString();
                 } while (rs.next());
     
                 LOGGER.debug("cpuCount: {} / memoryCount: {}", cpuCount, memoryCount);
+            } else {
+                LOGGER.info("No data on: " + stringTime);
+            }
+            return score;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return score;
+    }
     
-                // It calculate the average of the metrics of the monitorized pods
-                if (cpuCount > 0) {
-                    score.setCpuPod(score.getCpuPod() / cpuCount);
-                }
+    private PerformanceScore executeQueryPerformance(String stringTime, String sql) {
+        PerformanceScore score = null;
+        try {
+            PreparedStatement ps = this.connection.prepareStatement(sql);
+            ps.setString(1, stringTime);
+            ps.setInt(2, Constants.probeIdPerformance);
+            ResultSet rs = DatabaseManager.executeQuery(ps);
     
-                if (memoryCount > 0) {
-                    score.setMemoryPod(score.getMemoryPod() / memoryCount);
-                }
-    
+            if (rs.next()) {
+                score = new PerformanceScore();
+                do {
+                    int descriptionId = ((Integer) rs.getObject("descriptionId"));
+                    int resourceId = ((Integer) rs.getObject("resourceId"));
+                    Double value = ((Double) rs.getObject("value"));
+
+                    switch (descriptionId) {
+
+                    case Constants.responseTimeDescriptionId:
+                        if (isMonitorizedResource(resourceId)) {
+                            score.setResponseTime(value);
+                        } else {
+                            LOGGER.debug("Something is not right! " + stringTime);
+                        }
+                        break;
+
+                    case Constants.throughputDescriptionId:
+                        if (isMonitorizedResource(resourceId)) {
+                            score.setThroughput(value);
+                        } else {
+                            LOGGER.debug("Something is not right! " + stringTime);
+                        }
+                        break;
+
+                    default:
+                        LOGGER.debug("Something is not right! {}, descriptionId: {}", stringTime, descriptionId);
+                        break;
+                    }
+                    //String valueTime = rs.getObject("valueTime").toString();
+                } while (rs.next());
+
             } else {
                 LOGGER.info("No data on: " + stringTime);
             }
@@ -113,7 +171,7 @@ public class DataManager {
         return score;
     }
 
-    public boolean isMonitorizedPod(int podId) {
+    public boolean isMonitorizedResource(int podId) {
         return Constants.monitorizedPods.contains(podId);
     }
 
