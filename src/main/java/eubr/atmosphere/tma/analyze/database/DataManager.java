@@ -122,7 +122,7 @@ public class DataManager {
     }
     
     private PerformanceScore executeQueryPerformance(String stringTime, String sql) {
-        PerformanceScore score = null;
+        PerformanceScore score = new PerformanceScore();
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             ps.setString(1, stringTime);
@@ -130,7 +130,6 @@ public class DataManager {
             ResultSet rs = DatabaseManager.executeQuery(ps);
     
             if (rs.next()) {
-                score = new PerformanceScore();
                 do {
                     int descriptionId = ((Integer) rs.getObject("descriptionId"));
                     int resourceId = ((Integer) rs.getObject("resourceId"));
