@@ -37,7 +37,7 @@ public class Main {
             initialDate.add(Calendar.SECOND, -OBSERVATION_WINDOW_SECONDS);
             //Calendar finalDate = Calendar.getInstance();
 
-            System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score,type");
+            //System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score,type");
             //calculateScoreNormalized(dataManager, initialDate, finalDate);
             calculateScoreNonNormalized(dataManager, initialDate);
             try {
@@ -62,7 +62,10 @@ public class Main {
             TrustworthinessScore score = new TrustworthinessScore(resourceConsumptionScore, performanceScore);
             score.setTimestamp(initialDate.getTimeInMillis());
             score.setPodCount(KubernetesManager.getReplicas("wildfly"));
-            System.out.println(strDate + "," + resourceConsumptionScore.getCsvLine() + ",singleReading");
+            //System.out.println(strDate + "," + resourceConsumptionScore.getCsvLine() + ",singleReading");
+            LOGGER.info("resourceScore: {}", resourceConsumptionScore.toString());
+            LOGGER.info("performanceScore: {}", performanceScore.toString());
+            LOGGER.info("TrustworthinessScore: {}", score.toString());
             try {
                 kafkaManager.addItemKafka(score);
             } catch (InterruptedException e) {
