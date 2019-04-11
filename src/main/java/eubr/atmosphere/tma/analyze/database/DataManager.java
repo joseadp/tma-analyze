@@ -153,6 +153,22 @@ public class DataManager {
                         }
                         break;
 
+                    case Constants.demandDescriptionId:
+                        if (isMonitorizedResource(resourceId)) {
+                            score.setDemand(value);
+                        } else {
+                            LOGGER.debug("Something is not right! " + stringTime);
+                        }
+                        break;
+
+                    case Constants.rateRequestUnderContractedDescriptionId:
+                        if (isMonitorizedResource(resourceId)) {
+                            score.setRateRequestUnderContracted(value);
+                        } else {
+                            LOGGER.debug("Something is not right! " + stringTime);
+                        }
+                        break;
+
                     default:
                         LOGGER.debug("Something is not right! {}, descriptionId: {}", stringTime, descriptionId);
                         break;

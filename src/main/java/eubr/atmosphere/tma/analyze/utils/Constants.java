@@ -15,6 +15,9 @@ public final class Constants {
     public static final int responseTimeDescriptionId = 29; // mean response time (s) of the last second
     public static final int throughputDescriptionId = 30; // throughput (req/s) of the last second
 
+    public static final int demandDescriptionId = 58; // expected demand of requests per second
+    public static final int rateRequestUnderContractedDescriptionId = 59; // rate of requests under contracted
+
     //public static final int podId = 8; // kafka
     public static final int podId = 9; // wildfly-0
     public static final int nodeId = 11; // worker node
