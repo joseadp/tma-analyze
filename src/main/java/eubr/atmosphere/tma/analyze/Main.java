@@ -61,7 +61,7 @@ public class Main {
         if (resourceConsumptionScore != null && resourceConsumptionScore.isValid()) {
             TrustworthinessScore score = new TrustworthinessScore(resourceConsumptionScore, performanceScore);
             score.setTimestamp(initialDate.getTimeInMillis());
-            score.setPodCount(KubernetesManager.getReplicas("wildfly"));
+            score.setPodCount(KubernetesManager.getReplicas("teastore-webui"));
             //System.out.println(strDate + "," + resourceConsumptionScore.getCsvLine() + ",singleReading");
             LOGGER.info("resourceScore: {}", resourceConsumptionScore.toString());
             LOGGER.info("performanceScore: {}", performanceScore.toString());
