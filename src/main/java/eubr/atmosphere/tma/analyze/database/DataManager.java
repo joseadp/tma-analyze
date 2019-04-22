@@ -73,7 +73,7 @@ public class DataManager {
 
                     case Constants.cpuDescriptionId:
                         if (isMonitorizedResource(resourceId)) {
-                            score.setCpuPod(value);
+                            score.setCpuPod(score.getCpuPod() + value);
                         } else {
                             if (resourceId == Constants.nodeId) {
                                 // score.setCpuNode(value);
@@ -89,7 +89,7 @@ public class DataManager {
                     case Constants.memoryDescriptionId:
                         if (isMonitorizedResource(resourceId)) {
                             // It is needed to convert from bytes to Mi
-                            score.setMemoryPod(value / 1024);
+                            score.setMemoryPod(score.getMemoryPod() + value / 1024);
                         } else {
                             if (resourceId == Constants.nodeId) {
                                 // It is necessary to divide per 1024 to convert from bytes to Mi.
