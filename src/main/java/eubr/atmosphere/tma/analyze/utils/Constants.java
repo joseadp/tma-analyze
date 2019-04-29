@@ -18,7 +18,7 @@ public final class Constants {
     public static final int demandDescriptionId = 58; // expected demand of requests per second
     public static final int rateRequestUnderContractedDescriptionId = 59; // rate of requests under contracted
 
-    public static final int podId = 8; // kafka
+    //public static final int podId = 8; // kafka
     public static final int podId = 9; // wildfly-0
     public static final int podId2 = 13; // wildfly-1
     public static final int podId3 = 14; // wildfly-2
@@ -31,17 +31,17 @@ public final class Constants {
 
     public static final List<Integer> monitorizedPods = new ArrayList<Integer>() {{
         // Wildfly (WSVD)
-        //add(9);
-        //add(13);
-        //add(14);
-
-        // TeaStore
-        add(15);
-        add(16);
-        add(17);
-
+        add(9);
         add(13);
         add(14);
+
+        // TeaStore
+        //add(15);
+        //add(16);
+        //add(17);
+
+        //add(13);
+        //add(14);
         }};
 
     // Metrics related to the node
