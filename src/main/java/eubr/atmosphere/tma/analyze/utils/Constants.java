@@ -53,4 +53,7 @@ public final class Constants {
 
     // ProbeId of Performance (client)
     public static final int probeIdPerformance = 8;
+
+    public static final String replicaSetName = "wildfly";
+    //public static final String replicaSetName = "teastore-webui";
 }
