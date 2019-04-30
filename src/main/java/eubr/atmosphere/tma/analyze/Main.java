@@ -15,6 +15,7 @@ import eubr.atmosphere.tma.utils.TrustworthinessScore;
 import eubr.atmosphere.tma.analyze.database.DataManager;
 import eubr.atmosphere.tma.analyze.utils.Constants;
 import eubr.atmosphere.tma.analyze.utils.KubernetesManager;
+import eubr.atmosphere.tma.analyze.utils.PropertiesManager;
 
 public class Main {
 
@@ -26,11 +27,16 @@ public class Main {
 
     private static KafkaManager kafkaManager;
 
+    private static String statefulSetName;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
-        DataManager dataManager = new DataManager();
+        String monitoredPods = PropertiesManager.getInstance().getProperty("monitoredPods");;
+        DataManager dataManager = new DataManager(monitoredPods);
         kafkaManager = new KafkaManager();
+
+        statefulSetName = PropertiesManager.getInstance().getProperty("statefulSetName");
 
         while (true) {
         	Calendar initialDate = Calendar.getInstance();
@@ -61,7 +67,7 @@ public class Main {
         if (resourceConsumptionScore != null && resourceConsumptionScore.isValid()) {
             TrustworthinessScore score = new TrustworthinessScore(resourceConsumptionScore, performanceScore);
             score.setTimestamp(initialDate.getTimeInMillis());
-            score.setPodCount(KubernetesManager.getReplicas(Constants.replicaSetName));
+            score.setPodCount(KubernetesManager.getReplicas(statefulSetName));
             //System.out.println(strDate + "," + resourceConsumptionScore.getCsvLine() + ",singleReading");
             LOGGER.info("resourceScore: {}", resourceConsumptionScore.toString());
             LOGGER.info("performanceScore: {}", performanceScore.toString());
@@ -83,18 +89,20 @@ public class Main {
         currentInitial.add(Calendar.MINUTE, -OBSERVATION_WINDOW);
         currentFinal.add(Calendar.MINUTE, -OBSERVATION_WINDOW);
 
+        int podId = 9;
+
         for (int i = 0; i < OBSERVATION_WINDOW; i++) {
             String strInitialDate = sdf.format(currentInitial.getTime());
             String strFinalDate = sdf.format(currentFinal.getTime());
 
             List<Double> valuesCpuPod =
                     dataManager.getValuesPeriod(strInitialDate, strFinalDate,
-                    Constants.cpuDescriptionId, Constants.podId);
+                    Constants.cpuDescriptionId, podId);
             List<Double> valuesCpuPodNormalized = normalizeData(valuesCpuPod);
 
             List<Double> valuesMemoryPod =
                     dataManager.getValuesPeriod(strInitialDate, strFinalDate,
-                    Constants.memoryDescriptionId, Constants.podId);
+                    Constants.memoryDescriptionId, podId);
             List<Double> valuesMemoryPodNormalized = normalizeData(valuesMemoryPod);
 
             List<Double> valuesCpuNode =

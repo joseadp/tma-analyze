@@ -19,9 +19,14 @@ public class DataManager {
     private Connection connection = DatabaseManager.getConnectionInstance();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataManager.class);
+    public final List<Integer> monitoredPods = new ArrayList<Integer>();
 
-    public DataManager() {
+    public DataManager(String monitoredPodsString) {
         this.connection = DatabaseManager.getConnectionInstance();
+
+        String[] pods = monitoredPodsString.split(",");
+        for (int i = 0; i < pods.length; i++)
+            this.monitoredPods.add(Integer.parseInt(pods[i]));
     }
 
     public ResourceConsumptionScore getDataResourceConsumption(String stringTime) {
@@ -187,7 +192,7 @@ public class DataManager {
     }
 
     public boolean isMonitorizedResource(int podId) {
-        return Constants.monitorizedPods.contains(podId);
+        return this.monitoredPods.contains(podId);
     }
 
     public List<Double> getValuesPeriod(String initialDateTime, String finalDateTime,

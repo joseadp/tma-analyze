@@ -1,8 +1,5 @@
 package eubr.atmosphere.tma.analyze.utils;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public final class Constants {
 
     private Constants() {
@@ -19,9 +16,9 @@ public final class Constants {
     public static final int rateRequestUnderContractedDescriptionId = 59; // rate of requests under contracted
 
     //public static final int podId = 8; // kafka
-    public static final int podId = 9; // wildfly-0
+    /*public static final int podId = 9; // wildfly-0
     public static final int podId2 = 13; // wildfly-1
-    public static final int podId3 = 14; // wildfly-2
+    public static final int podId3 = 14; // wildfly-2*/
 
     //public static final int podId = 15; // teastore-webui-0
     //public static final int podId2 = 16; // teastore-webui-1
@@ -29,7 +26,7 @@ public final class Constants {
 
     public static final int nodeId = 11; // worker node
 
-    public static final List<Integer> monitorizedPods = new ArrayList<Integer>() {{
+    /*public static final List<Integer> monitorizedPods = new ArrayList<Integer>() {{
         // Wildfly (WSVD)
         add(9);
         add(13);
@@ -42,7 +39,7 @@ public final class Constants {
 
         //add(13);
         //add(14);
-        }};
+        }};*/
 
     // Metrics related to the node
     public static final Double maxCPU = 4165.0;
@@ -54,6 +51,7 @@ public final class Constants {
     // ProbeId of Performance (client)
     public static final int probeIdPerformance = 8;
 
-    public static final String replicaSetName = "wildfly";
-    //public static final String replicaSetName = "teastore-webui";
+    //public static final String statefulSetName = "monitor-server";
+    //public static final String statefulSetName = "wildfly";
+    //public static final String statefulSetName = "teastore-webui";
 }
