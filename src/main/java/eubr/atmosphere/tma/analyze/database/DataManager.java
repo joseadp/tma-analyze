@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import eubr.atmosphere.tma.utils.PerformanceScore;
 import eubr.atmosphere.tma.utils.ResourceConsumptionScore;
 import eubr.atmosphere.tma.analyze.utils.Constants;
+import eubr.atmosphere.tma.analyze.utils.PropertiesManager;
 
 public class DataManager {
 
@@ -20,9 +21,15 @@ public class DataManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataManager.class);
     public final List<Integer> monitoredPods = new ArrayList<Integer>();
+    public final Integer probeIdResourceConsumption;
+    public final Integer probeIdPerformance;
 
     public DataManager(String monitoredPodsString) {
         this.connection = DatabaseManager.getConnectionInstance();
+        this.probeIdResourceConsumption =
+                Integer.parseInt(PropertiesManager.getInstance().getProperty("probeIdResourceConsumption"));
+        this.probeIdPerformance =
+                Integer.parseInt(PropertiesManager.getInstance().getProperty("probeIdPerformance"));
 
         String[] pods = monitoredPodsString.split(",");
         for (int i = 0; i < pods.length; i++)
@@ -62,7 +69,7 @@ public class DataManager {
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             ps.setString(1, stringTime);
-            ps.setInt(2, Constants.probeIdResourceConsumption);
+            ps.setInt(2, probeIdResourceConsumption);
             ResultSet rs = DatabaseManager.executeQuery(ps);
     
             if (rs.next()) {
@@ -131,7 +138,7 @@ public class DataManager {
         try {
             PreparedStatement ps = this.connection.prepareStatement(sql);
             ps.setString(1, stringTime);
-            ps.setInt(2, Constants.probeIdPerformance);
+            ps.setInt(2, probeIdPerformance);
             ResultSet rs = DatabaseManager.executeQuery(ps);
     
             if (rs.next()) {

@@ -32,7 +32,7 @@ public class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
-        String monitoredPods = PropertiesManager.getInstance().getProperty("monitoredPods");;
+        String monitoredPods = PropertiesManager.getInstance().getProperty("monitoredPods");
         DataManager dataManager = new DataManager(monitoredPods);
         kafkaManager = new KafkaManager();
 
