@@ -75,7 +75,7 @@ public class DataManager {
 
 	}
 
-	private SecurityScore executeQuerySecurityCloudEA(String stringTime, String sql) {
+	private SecurityScore executeQuerySecurity(String stringTime, String sql) {
 		SecurityScore score = new SecurityScore();
 
 		try {
@@ -148,7 +148,6 @@ public class DataManager {
 		return score;
 	}
 
-	///////////////////////
 
 	private ResourceConsumptionScore executeQueryResourceConsumption(String stringTime, String sql) {
 		ResourceConsumptionScore score = null;
