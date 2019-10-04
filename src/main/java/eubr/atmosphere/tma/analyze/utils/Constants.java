@@ -15,6 +15,13 @@ public final class Constants {
     public static final int demandDescriptionId = 58; // expected demand of requests per second
     public static final int rateRequestUnderContractedDescriptionId = 59; // rate of requests under contracted
 
+    
+    public static final int ExistenceOfBestPracticeDescriptionId = 10;
+    public static final int ExistenceOfSecurityDefinitionsDescriptionId = 11;
+    public static final int ExistenceOfCheckAreaDescriptionId = 12;
+    public static final int ExistenceOfPolicyDescriptionId = 13;
+    public static final int ExistenceOfSecurityControlDescriptionId = 14 ;
+    
     public static final int nodeId = 11; // worker node
 
     // Metrics related to the node
