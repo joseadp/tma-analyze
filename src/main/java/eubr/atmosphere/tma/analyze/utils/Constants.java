@@ -16,11 +16,11 @@ public final class Constants {
     public static final int rateRequestUnderContractedDescriptionId = 59; // rate of requests under contracted
 
     
-    public static final int ExistenceOfBestPracticeDescriptionId = 10;
-    public static final int ExistenceOfSecurityDefinitionsDescriptionId = 11;
-    public static final int ExistenceOfCheckAreaDescriptionId = 12;
-    public static final int ExistenceOfPolicyDescriptionId = 13;
-    public static final int ExistenceOfSecurityControlDescriptionId = 14 ;
+    public static final int ExistenceOfBestPracticeDescriptionId = 80001;
+    public static final int ExistenceOfSecurityDefinitionsDescriptionId = 80002;
+    public static final int ExistenceOfCheckAreaDescriptionId = 80003;
+    public static final int ExistenceOfPolicyDescriptionId = 80004;
+    public static final int ExistenceOfSecurityControlDescriptionId = 80005 ;
     
     public static final int nodeId = 11; // worker node
 
