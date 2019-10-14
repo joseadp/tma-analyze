@@ -27,4 +27,11 @@ public final class Constants {
     // Metrics related to the node
     public static final Double maxCPU = 4165.0;
     public static final Double maxMemory = 7966.0;
+    
+    // Metric Information about the Scores
+    // TODO complete the remaining scores (Security from Dell)
+    // TODO insert the IDs in the database and update here
+    public static final int resourceConsumptionMetricId = -1;
+    public static final int performanceMetricId = -1;
+    public static final int trustworthinessMetricId = -1;
 }

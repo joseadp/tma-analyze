@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import eubr.atmosphere.tma.utils.PerformanceScore;
 import eubr.atmosphere.tma.utils.ResourceConsumptionScore;
+import eubr.atmosphere.tma.utils.TrustworthinessScore;
 import eubr.atmosphere.tma.analyze.utils.Constants;
 import eubr.atmosphere.tma.analyze.utils.PropertiesManager;
 
@@ -313,5 +314,17 @@ public class DataManager {
 			e.printStackTrace();
 		}
 		return values;
+	}
+
+	public void saveScore(TrustworthinessScore score) {
+		// TODO This method should save not only the Trustworthiness score, but also the 
+		//      resourceConsumptionScore and performanceScore
+		
+		// TODO Use the following constants:
+		//Constants.resourceConsumptionMetricId;
+		//Constants.performanceMetricId;
+		//Constants.trustworthinessMetricId;
+		
+		// The score will be saved in the MetricData table
 	}
 }
