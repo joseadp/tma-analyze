@@ -34,4 +34,6 @@ public final class Constants {
     public static final int resourceConsumptionMetricId = -1;
     public static final int performanceMetricId = -1;
     public static final int trustworthinessMetricId = -1;
+    
+    public static final int securityDellMetricId = -1;
 }
