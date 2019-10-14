@@ -31,9 +31,9 @@ public final class Constants {
     // Metric Information about the Scores
     // TODO complete the remaining scores (Security from Dell)
     // TODO insert the IDs in the database and update here
-    public static final int resourceConsumptionMetricId = -1;
-    public static final int performanceMetricId = -1;
-    public static final int trustworthinessMetricId = -1;
+    public static final int resourceConsumptionMetricId = 5;
+    public static final int performanceMetricId = 6;
+    public static final int trustworthinessMetricId = 7;
     
-    public static final int securityDellMetricId = -1;
+    public static final int securityDellMetricId = 8;
 }
