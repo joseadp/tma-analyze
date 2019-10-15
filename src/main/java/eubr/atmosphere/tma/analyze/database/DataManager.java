@@ -10,6 +10,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eubr.atmosphere.tma.utils.DatabaseManager;
 import eubr.atmosphere.tma.utils.PerformanceScore;
 import eubr.atmosphere.tma.utils.ResourceConsumptionScore;
 import eubr.atmosphere.tma.utils.TrustworthinessScore;
@@ -62,7 +63,7 @@ public class DataManager {
 		}
 	}
 
-	public SecurityScore getDataSecurity(String stringTime) {
+	/*public SecurityScore getDataSecurity(String stringTime) {
 
 		String sql = "select descriptionId, resourceId, value from Data " + "where "
 				+ "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i:%s\") >= ? AND" + "(probeId = ?) "
@@ -147,7 +148,7 @@ public class DataManager {
 			e.printStackTrace();
 		}
 		return score;
-	}
+	}*/
 
 
 	private ResourceConsumptionScore executeQueryResourceConsumption(String stringTime, String sql) {
@@ -166,6 +167,7 @@ public class DataManager {
 					int descriptionId = ((Integer) rs.getObject("descriptionId"));
 					int resourceId = ((Integer) rs.getObject("resourceId"));
 					Double value = ((Double) rs.getObject("value"));
+					score.setResourceId(resourceId);
 
 					switch (descriptionId) {
 
@@ -234,6 +236,7 @@ public class DataManager {
 					int descriptionId = ((Integer) rs.getObject("descriptionId"));
 					int resourceId = ((Integer) rs.getObject("resourceId"));
 					Double value = ((Double) rs.getObject("value"));
+					score.setResourceId(resourceId);
 
 					switch (descriptionId) {
 
@@ -316,7 +319,7 @@ public class DataManager {
 		return values;
 	}
 
-	public void saveScore(TrustworthinessScore score) {
+	public int[] saveScore(TrustworthinessScore score) {
 		// TODO This method should save not only the Trustworthiness score, but also the 
 		//      resourceConsumptionScore and performanceScore
 		
@@ -326,5 +329,41 @@ public class DataManager {
 		//Constants.trustworthinessMetricId;
 		
 		// The score will be saved in the MetricData table
+		
+		
+        String sql =
+                "INSERT INTO MetricData(metricId, valueTime, value, resourceId) "
+                + "VALUES (?, FROM_UNIXTIME(?), ?, ?)";
+        PreparedStatement ps;
+
+        try {
+            ps = DatabaseManager.getConnectionInstance().prepareStatement(sql);
+            
+            ps.setInt(1, Constants.trustworthinessMetricId);
+            ps.setLong(2, score.getValueTime());
+            ps.setDouble(3, score.getScore());
+            ps.setInt(4, score.getResourceId());
+            ps.addBatch();
+            
+            ResourceConsumptionScore rcScore = score.getResourceConsumptionScore();
+            ps.setInt(1, Constants.resourceConsumptionMetricId);
+            ps.setLong(2, rcScore.getValueTime());
+            ps.setDouble(3, rcScore.getScore());
+            ps.setInt(4, rcScore.getResourceId());
+            ps.addBatch();
+            
+            PerformanceScore performanceScore = score.getPerformanceScore();
+            ps.setInt(1, Constants.performanceMetricId);
+            ps.setLong(2, performanceScore.getValueTime());
+            ps.setDouble(3, performanceScore.getScore());
+            ps.setInt(4, performanceScore.getResourceId());
+            ps.addBatch();
+
+            DatabaseManager databaseManager = new DatabaseManager();
+            return databaseManager.executeBatch(ps);
+        } catch (SQLException e) {
+            LOGGER.error("[ATMOSPHERE] Error when inserting a plan in the database.", e);
+        }
+        return null;
 	}
 }

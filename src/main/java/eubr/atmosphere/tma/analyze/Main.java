@@ -66,7 +66,9 @@ public class Main {
         PerformanceScore performanceScore = dataManager.getDataPerformance(strDate);
         if (resourceConsumptionScore != null && resourceConsumptionScore.isValid()) {
             TrustworthinessScore score = new TrustworthinessScore(resourceConsumptionScore, performanceScore);
-            score.setTimestamp(initialDate.getTimeInMillis());
+            score.setValueTime(initialDate.getTimeInMillis());
+            score.getResourceConsumptionScore().setValueTime(score.getValueTime());
+            score.getPerformanceScore().setValueTime(score.getValueTime());
             score.setPodCount(KubernetesManager.getReplicas(statefulSetName));
             dataManager.saveScore(score);
             //System.out.println(strDate + "," + resourceConsumptionScore.getCsvLine() + ",singleReading");
