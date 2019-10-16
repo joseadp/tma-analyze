@@ -67,7 +67,7 @@ public class Main {
         if (resourceConsumptionScore != null && resourceConsumptionScore.isValid()) {
             TrustworthinessScore score = new TrustworthinessScore(resourceConsumptionScore, performanceScore);
             score.setMetricId(Constants.trustworthinessMetricId);
-            score.setValueTime(initialDate.getTimeInMillis());
+            score.setValueTime(initialDate.getTimeInMillis() / 1000);
             score.getResourceConsumptionScore().setValueTime(score.getValueTime());
             score.getPerformanceScore().setValueTime(score.getValueTime());
             score.setPodCount(KubernetesManager.getReplicas(statefulSetName));
