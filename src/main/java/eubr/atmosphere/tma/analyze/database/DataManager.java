@@ -25,38 +25,38 @@ public class DataManager {
 	public final List<Integer> monitoredPods = new ArrayList<Integer>();
 	public final Integer probeIdResourceConsumption;
 	public final Integer probeIdPerformance;
-	public final Integer probeIdSecurity;
+	//public final Integer probeIdSecurity;
 
 	public DataManager(String monitoredPodsString) {
 		this.connection = DatabaseManager.getConnectionInstance();
 		this.probeIdResourceConsumption = Integer
 				.parseInt(PropertiesManager.getInstance().getProperty("probeIdResourceConsumption"));
 		this.probeIdPerformance = Integer.parseInt(PropertiesManager.getInstance().getProperty("probeIdPerformance"));
-		this.probeIdSecurity = Integer.parseInt(PropertiesManager.getInstance().getProperty("probeIdSecurity"));
+		//this.probeIdSecurity = Integer.parseInt(PropertiesManager.getInstance().getProperty("probeIdSecurity"));
 
 		String[] pods = monitoredPodsString.split(",");
 		for (int i = 0; i < pods.length; i++)
 			this.monitoredPods.add(Integer.parseInt(pods[i]));
 	}
 
-	public ResourceConsumptionScore getDataResourceConsumption(String stringTime) {
+	public ResourceConsumptionScore getDataResourceConsumption(String stringTime, int resource) {
 		String sql = "select descriptionId, resourceId, avg(value) as value from Data " + "where "
 				+ "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i:%s\") >= ? AND" + "(probeId = ?) "
 				+ "group by descriptionId, resourceId;";
 		if (this.connection != null) {
-			return executeQueryResourceConsumption(stringTime, sql);
+			return executeQueryResourceConsumption(stringTime, sql, resource);
 		} else {
 			LOGGER.error("The connection is null!");
 			return null;
 		}
 	}
 
-	public PerformanceScore getDataPerformance(String stringTime) {
+	public PerformanceScore getDataPerformance(String stringTime, int resource) {
 		String sql = "select descriptionId, resourceId, avg(value) as value from Data " + "where "
 				+ "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i:%s\") >= ? AND" + "(probeId = ?) "
 				+ "group by descriptionId, resourceId;";
 		if (this.connection != null) {
-			return executeQueryPerformance(stringTime, sql);
+			return executeQueryPerformance(stringTime, sql, resource);
 		} else {
 			LOGGER.error("The connection is null!");
 			return null;
@@ -151,8 +151,10 @@ public class DataManager {
 	}*/
 
 
-	private ResourceConsumptionScore executeQueryResourceConsumption(String stringTime, String sql) {
+	private ResourceConsumptionScore executeQueryResourceConsumption(String stringTime, String sql, int resource) {
 		ResourceConsumptionScore score = null;
+		score.setResourceId(resource);
+                score.setMetricId(Constants.resourceConsumptionMetricId);
 		try {
 			PreparedStatement ps = this.connection.prepareStatement(sql);
 			ps.setString(1, stringTime);
@@ -167,8 +169,6 @@ public class DataManager {
 					int descriptionId = ((Integer) rs.getObject("descriptionId"));
 					int resourceId = ((Integer) rs.getObject("resourceId"));
 					Double value = ((Double) rs.getObject("value"));
-					score.setResourceId(resourceId);
-					score.setMetricId(Constants.resourceConsumptionMetricId);
 
 					switch (descriptionId) {
 
@@ -224,8 +224,10 @@ public class DataManager {
 		return score;
 	}
 
-	private PerformanceScore executeQueryPerformance(String stringTime, String sql) {
+	private PerformanceScore executeQueryPerformance(String stringTime, String sql, int resource) {
 		PerformanceScore score = new PerformanceScore();
+		score.setMetricId(Constants.performanceMetricId);
+		score.setResourceId(resource);
 		try {
 			PreparedStatement ps = this.connection.prepareStatement(sql);
 			ps.setString(1, stringTime);

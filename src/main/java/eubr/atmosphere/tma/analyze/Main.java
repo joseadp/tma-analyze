@@ -45,7 +45,7 @@ public class Main {
 
             //System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score,type");
             //calculateScoreNormalized(dataManager, initialDate, finalDate);
-            calculateScoreNonNormalized(dataManager, initialDate);
+            calculateScoreNonNormalized(dataManager, initialDate, monitoredPods);
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
@@ -60,17 +60,19 @@ public class Main {
      * @param dataManager object used to manipulate the database
      * @param initialDate initial date of the search
      */
-    private static void calculateScoreNonNormalized(DataManager dataManager, Calendar initialDate) {
+    private static void calculateScoreNonNormalized(DataManager dataManager, Calendar initialDate, String monitoredPodsString) {
         String strDate = sdf.format(initialDate.getTime());
-        ResourceConsumptionScore resourceConsumptionScore = dataManager.getDataResourceConsumption(strDate);
-        PerformanceScore performanceScore = dataManager.getDataPerformance(strDate);
+	String[] pods = monitoredPodsString.split(",");
+        ResourceConsumptionScore resourceConsumptionScore = dataManager.getDataResourceConsumption(strDate,Integer.parseInt(pods[0]));
+        PerformanceScore performanceScore = dataManager.getDataPerformance(strDate, Integer.parseInt(pods[0]));
         if (resourceConsumptionScore != null && resourceConsumptionScore.isValid()) {
             TrustworthinessScore score = new TrustworthinessScore(resourceConsumptionScore, performanceScore);
             score.setMetricId(Constants.trustworthinessMetricId);
-            score.setValueTime(initialDate.getTimeInMillis());
+            score.setValueTime(initialDate.getTimeInMillis()/1000);
             score.getResourceConsumptionScore().setValueTime(score.getValueTime());
             score.getPerformanceScore().setValueTime(score.getValueTime());
             score.setPodCount(KubernetesManager.getReplicas(statefulSetName));
+	    score.setResourceId(Integer.parseInt(pods[0]));
             dataManager.saveScore(score);
             //System.out.println(strDate + "," + resourceConsumptionScore.getCsvLine() + ",singleReading");
             LOGGER.info("resourceScore: {}", resourceConsumptionScore.toString());
