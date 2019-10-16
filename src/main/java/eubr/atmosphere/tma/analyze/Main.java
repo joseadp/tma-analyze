@@ -66,6 +66,7 @@ public class Main {
         PerformanceScore performanceScore = dataManager.getDataPerformance(strDate);
         if (resourceConsumptionScore != null && resourceConsumptionScore.isValid()) {
             TrustworthinessScore score = new TrustworthinessScore(resourceConsumptionScore, performanceScore);
+            score.setMetricId(Constants.trustworthinessMetricId);
             score.setValueTime(initialDate.getTimeInMillis());
             score.getResourceConsumptionScore().setValueTime(score.getValueTime());
             score.getPerformanceScore().setValueTime(score.getValueTime());

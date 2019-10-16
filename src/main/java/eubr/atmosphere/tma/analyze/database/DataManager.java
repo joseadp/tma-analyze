@@ -168,6 +168,7 @@ public class DataManager {
 					int resourceId = ((Integer) rs.getObject("resourceId"));
 					Double value = ((Double) rs.getObject("value"));
 					score.setResourceId(resourceId);
+					score.setMetricId(Constants.resourceConsumptionMetricId);
 
 					switch (descriptionId) {
 
@@ -237,6 +238,7 @@ public class DataManager {
 					int resourceId = ((Integer) rs.getObject("resourceId"));
 					Double value = ((Double) rs.getObject("value"));
 					score.setResourceId(resourceId);
+					score.setMetricId(Constants.performanceMetricId);
 
 					switch (descriptionId) {
 
@@ -339,21 +341,21 @@ public class DataManager {
         try {
             ps = DatabaseManager.getConnectionInstance().prepareStatement(sql);
             
-            ps.setInt(1, Constants.trustworthinessMetricId);
+            ps.setInt(1, score.getMetricId());
             ps.setLong(2, score.getValueTime());
             ps.setDouble(3, score.getScore());
             ps.setInt(4, score.getResourceId());
             ps.addBatch();
             
             ResourceConsumptionScore rcScore = score.getResourceConsumptionScore();
-            ps.setInt(1, Constants.resourceConsumptionMetricId);
+            ps.setInt(1, rcScore.getMetricId());
             ps.setLong(2, rcScore.getValueTime());
             ps.setDouble(3, rcScore.getScore());
             ps.setInt(4, rcScore.getResourceId());
             ps.addBatch();
             
             PerformanceScore performanceScore = score.getPerformanceScore();
-            ps.setInt(1, Constants.performanceMetricId);
+            ps.setInt(1, performanceScore.getMetricId());
             ps.setLong(2, performanceScore.getValueTime());
             ps.setDouble(3, performanceScore.getScore());
             ps.setInt(4, performanceScore.getResourceId());
