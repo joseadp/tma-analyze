@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import eubr.atmosphere.tma.utils.DatabaseManager;
 import eubr.atmosphere.tma.utils.PerformanceScore;
 import eubr.atmosphere.tma.utils.ResourceConsumptionScore;
+import eubr.atmosphere.tma.utils.SecurityScore;
 import eubr.atmosphere.tma.utils.TrustworthinessScore;
 import eubr.atmosphere.tma.analyze.utils.Constants;
 import eubr.atmosphere.tma.analyze.utils.PropertiesManager;
@@ -25,14 +26,14 @@ public class DataManager {
 	public final List<Integer> monitoredPods = new ArrayList<Integer>();
 	public final Integer probeIdResourceConsumption;
 	public final Integer probeIdPerformance;
-	//public final Integer probeIdSecurity;
+	public final Integer probeIdSecurity;
 
 	public DataManager(String monitoredPodsString) {
 		this.connection = DatabaseManager.getConnectionInstance();
 		this.probeIdResourceConsumption = Integer
 				.parseInt(PropertiesManager.getInstance().getProperty("probeIdResourceConsumption"));
 		this.probeIdPerformance = Integer.parseInt(PropertiesManager.getInstance().getProperty("probeIdPerformance"));
-		//this.probeIdSecurity = Integer.parseInt(PropertiesManager.getInstance().getProperty("probeIdSecurity"));
+		this.probeIdSecurity = Integer.parseInt(PropertiesManager.getInstance().getProperty("probeIdSecurity"));
 
 		String[] pods = monitoredPodsString.split(",");
 		for (int i = 0; i < pods.length; i++)
@@ -63,7 +64,7 @@ public class DataManager {
 		}
 	}
 
-	/*public SecurityScore getDataSecurity(String stringTime) {
+	public SecurityScore getDataSecurity(String stringTime) {
 
 		String sql = "select descriptionId, resourceId, value from Data " + "where "
 				+ "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i:%s\") >= ? AND" + "(probeId = ?) "
@@ -79,6 +80,8 @@ public class DataManager {
 
 	private SecurityScore executeQuerySecurity(String stringTime, String sql) {
 		SecurityScore score = new SecurityScore();
+		score.setMetricId(Constants.securityDellMetricId);
+		score.setValueTime(System.currentTimeMillis() / 1000);
 
 		try {
 			PreparedStatement ps = this.connection.prepareStatement(sql);
@@ -91,6 +94,7 @@ public class DataManager {
 					int descriptionId = ((Integer) rs.getObject("descriptionId"));
 					int resourceId = ((Integer) rs.getObject("resourceId"));
 					Double value = ((Double) rs.getObject("value"));
+					score.setResourceId(resourceId);
 
 					switch (descriptionId) {
 
@@ -148,7 +152,7 @@ public class DataManager {
 			e.printStackTrace();
 		}
 		return score;
-	}*/
+	}
 
 
 	private ResourceConsumptionScore executeQueryResourceConsumption(String stringTime, String sql, int resource) {
