@@ -94,13 +94,12 @@ public class DataManager {
 					int descriptionId = ((Integer) rs.getObject("descriptionId"));
 					int resourceId = ((Integer) rs.getObject("resourceId"));
 					Double value = ((Double) rs.getObject("value"));
-					score.setResourceId(resourceId);
 
 					switch (descriptionId) {
 
 					case Constants.ExistenceOfBestPracticeDescriptionId:
 						if (isMonitorizedResource(resourceId)) {
-							score.setExistenceOfBestPractice(value);
+							score.setExistenceOfBestPractice(resourceId,value);
 						} else {
 							LOGGER.debug("Something is not right! " + stringTime);
 						}
@@ -108,7 +107,7 @@ public class DataManager {
 
 					case Constants.ExistenceOfCheckAreaDescriptionId:
 						if (isMonitorizedResource(resourceId)) {
-							score.setExistenceOfCheckAreas(value);
+							score.setExistenceOfCheckAreas(resourceId,value);
 						} else {
 							LOGGER.debug("Something is not right! " + stringTime);
 						}
@@ -116,7 +115,7 @@ public class DataManager {
 
 					case Constants.ExistenceOfPolicyDescriptionId:
 						if (isMonitorizedResource(resourceId)) {
-							score.setExistenceOfPolicy(value);
+							score.setExistenceOfPolicy(resourceId,value);
 						} else {
 							LOGGER.debug("Something is not right! " + stringTime);
 						}
@@ -124,14 +123,14 @@ public class DataManager {
 
 					case Constants.ExistenceOfSecurityControlDescriptionId:
 						if (isMonitorizedResource(resourceId)) {
-							score.setExistenceOfSecurityControl(value);
+							score.setExistenceOfSecurityControl(resourceId,value);
 						} else {
 							LOGGER.debug("Something is not right! " + stringTime);
 						}
 						break;
 					case Constants.ExistenceOfSecurityDefinitionsDescriptionId:
 						if (isMonitorizedResource(resourceId)) {
-							score.setExistenceOfSecuritySefnition(value);
+							score.setExistenceOfSecuritySefnition(resourceId,value);
 						} else {
 							LOGGER.debug("Something is not right! " + stringTime);
 						}
