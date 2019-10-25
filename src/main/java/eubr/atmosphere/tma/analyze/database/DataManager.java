@@ -64,13 +64,14 @@ public class DataManager {
 		}
 	}
 
-	public SecurityScore getDataSecurity(String stringTime) {
+	
+	public SecurityScore getDataSecurity(String stringTime, int resource) {
 
 		String sql = "select descriptionId, resourceId, value from Data " + "where "
 				+ "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i:%s\") >= ? AND" + "(probeId = ?) "
 				+ "group by descriptionId, resourceId;";
 		if (this.connection != null) {
-			return executeQuerySecurity(stringTime, sql);
+			return executeQuerySecurity(stringTime, sql, resource);
 		} else {
 			LOGGER.error("The connection is null!");
 			return null;
@@ -78,10 +79,16 @@ public class DataManager {
 
 	}
 
-	private SecurityScore executeQuerySecurity(String stringTime, String sql) {
+	/**
+	 * This method executes the query for retrieving data regarding the
+	 * SecurityMetric. The data belong to various descriptions and may belong to
+	 * even various resources.
+	 */
+	private SecurityScore executeQuerySecurity(String stringTime, String sql, int resource) {
 		SecurityScore score = new SecurityScore();
 		score.setMetricId(Constants.securityDellMetricId);
 		score.setValueTime(System.currentTimeMillis() / 1000);
+		score.setResourceId(resource);
 
 		try {
 			PreparedStatement ps = this.connection.prepareStatement(sql);
@@ -99,7 +106,7 @@ public class DataManager {
 
 					case Constants.ExistenceOfBestPracticeDescriptionId:
 						if (isMonitorizedResource(resourceId)) {
-							score.setExistenceOfBestPractice(resourceId,value);
+							score.setExistenceOfBestPractice(resourceId, value);
 						} else {
 							LOGGER.debug("Something is not right! " + stringTime);
 						}
@@ -107,7 +114,7 @@ public class DataManager {
 
 					case Constants.ExistenceOfCheckAreaDescriptionId:
 						if (isMonitorizedResource(resourceId)) {
-							score.setExistenceOfCheckAreas(resourceId,value);
+							score.setExistenceOfCheckAreas(resourceId, value);
 						} else {
 							LOGGER.debug("Something is not right! " + stringTime);
 						}
@@ -115,7 +122,7 @@ public class DataManager {
 
 					case Constants.ExistenceOfPolicyDescriptionId:
 						if (isMonitorizedResource(resourceId)) {
-							score.setExistenceOfPolicy(resourceId,value);
+							score.setExistenceOfPolicy(resourceId, value);
 						} else {
 							LOGGER.debug("Something is not right! " + stringTime);
 						}
@@ -123,14 +130,14 @@ public class DataManager {
 
 					case Constants.ExistenceOfSecurityControlDescriptionId:
 						if (isMonitorizedResource(resourceId)) {
-							score.setExistenceOfSecurityControl(resourceId,value);
+							score.setExistenceOfSecurityControl(resourceId, value);
 						} else {
 							LOGGER.debug("Something is not right! " + stringTime);
 						}
 						break;
 					case Constants.ExistenceOfSecurityDefinitionsDescriptionId:
 						if (isMonitorizedResource(resourceId)) {
-							score.setExistenceOfSecuritySefnition(resourceId,value);
+							score.setExistenceOfSecurityDefnition(resourceId, value);
 						} else {
 							LOGGER.debug("Something is not right! " + stringTime);
 						}
@@ -153,11 +160,10 @@ public class DataManager {
 		return score;
 	}
 
-
 	private ResourceConsumptionScore executeQueryResourceConsumption(String stringTime, String sql, int resource) {
 		ResourceConsumptionScore score = null;
 		score.setResourceId(resource);
-                score.setMetricId(Constants.resourceConsumptionMetricId);
+		score.setMetricId(Constants.resourceConsumptionMetricId);
 		try {
 			PreparedStatement ps = this.connection.prepareStatement(sql);
 			ps.setString(1, stringTime);
@@ -242,7 +248,6 @@ public class DataManager {
 					int descriptionId = ((Integer) rs.getObject("descriptionId"));
 					int resourceId = ((Integer) rs.getObject("resourceId"));
 					Double value = ((Double) rs.getObject("value"));
-					score.setResourceId(resourceId);
 					score.setMetricId(Constants.performanceMetricId);
 
 					switch (descriptionId) {
@@ -327,50 +332,48 @@ public class DataManager {
 	}
 
 	public int[] saveScore(TrustworthinessScore score) {
-		// TODO This method should save not only the Trustworthiness score, but also the 
-		//      resourceConsumptionScore and performanceScore
-		
+		// TODO This method should save not only the Trustworthiness score, but also the
+		// resourceConsumptionScore and performanceScore
+
 		// TODO Use the following constants:
-		//Constants.resourceConsumptionMetricId;
-		//Constants.performanceMetricId;
-		//Constants.trustworthinessMetricId;
-		
+		// Constants.resourceConsumptionMetricId;
+		// Constants.performanceMetricId;
+		// Constants.trustworthinessMetricId;
+
 		// The score will be saved in the MetricData table
-		
-		
-        String sql =
-                "INSERT INTO MetricData(metricId, valueTime, value, resourceId) "
-                + "VALUES (?, FROM_UNIXTIME(?), ?, ?)";
-        PreparedStatement ps;
 
-        try {
-            ps = DatabaseManager.getConnectionInstance().prepareStatement(sql);
-            
-            ps.setInt(1, score.getMetricId());
-            ps.setLong(2, score.getValueTime());
-            ps.setDouble(3, score.getScore());
-            ps.setInt(4, score.getResourceId());
-            ps.addBatch();
-            
-            ResourceConsumptionScore rcScore = score.getResourceConsumptionScore();
-            ps.setInt(1, rcScore.getMetricId());
-            ps.setLong(2, rcScore.getValueTime());
-            ps.setDouble(3, rcScore.getScore());
-            ps.setInt(4, rcScore.getResourceId());
-            ps.addBatch();
-            
-            PerformanceScore performanceScore = score.getPerformanceScore();
-            ps.setInt(1, performanceScore.getMetricId());
-            ps.setLong(2, performanceScore.getValueTime());
-            ps.setDouble(3, performanceScore.getScore());
-            ps.setInt(4, performanceScore.getResourceId());
-            ps.addBatch();
+		String sql = "INSERT INTO MetricData(metricId, valueTime, value, resourceId) "
+				+ "VALUES (?, FROM_UNIXTIME(?), ?, ?)";
+		PreparedStatement ps;
 
-            DatabaseManager databaseManager = new DatabaseManager();
-            return databaseManager.executeBatch(ps);
-        } catch (SQLException e) {
-            LOGGER.error("[ATMOSPHERE] Error when inserting a plan in the database.", e);
-        }
-        return null;
+		try {
+			ps = DatabaseManager.getConnectionInstance().prepareStatement(sql);
+
+			ps.setInt(1, score.getMetricId());
+			ps.setLong(2, score.getValueTime());
+			ps.setDouble(3, score.getScore());
+			ps.setInt(4, score.getResourceId());
+			ps.addBatch();
+
+			ResourceConsumptionScore rcScore = score.getResourceConsumptionScore();
+			ps.setInt(1, rcScore.getMetricId());
+			ps.setLong(2, rcScore.getValueTime());
+			ps.setDouble(3, rcScore.getScore());
+			ps.setInt(4, rcScore.getResourceId());
+			ps.addBatch();
+
+			PerformanceScore performanceScore = score.getPerformanceScore();
+			ps.setInt(1, performanceScore.getMetricId());
+			ps.setLong(2, performanceScore.getValueTime());
+			ps.setDouble(3, performanceScore.getScore());
+			ps.setInt(4, performanceScore.getResourceId());
+			ps.addBatch();
+
+			DatabaseManager databaseManager = new DatabaseManager();
+			return databaseManager.executeBatch(ps);
+		} catch (SQLException e) {
+			LOGGER.error("[ATMOSPHERE] Error when inserting a plan in the database.", e);
+		}
+		return null;
 	}
 }
