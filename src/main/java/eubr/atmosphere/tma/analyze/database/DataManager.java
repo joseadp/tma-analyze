@@ -162,8 +162,6 @@ public class DataManager {
 
 	private ResourceConsumptionScore executeQueryResourceConsumption(String stringTime, String sql, int resource) {
 		ResourceConsumptionScore score = null;
-		score.setResourceId(resource);
-		score.setMetricId(Constants.resourceConsumptionMetricId);
 		try {
 			PreparedStatement ps = this.connection.prepareStatement(sql);
 			ps.setString(1, stringTime);
@@ -172,6 +170,8 @@ public class DataManager {
 
 			if (rs.next()) {
 				score = new ResourceConsumptionScore();
+				score.setResourceId(resource);
+				score.setMetricId(Constants.resourceConsumptionMetricId);
 				int cpuCount = 0;
 				int memoryCount = 0;
 				do {
