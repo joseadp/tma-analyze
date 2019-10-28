@@ -39,7 +39,7 @@ public class Main {
         statefulSetName = PropertiesManager.getInstance().getProperty("statefulSetName");
 
         while (true) {
-        	Calendar initialDate = Calendar.getInstance();
+            Calendar initialDate = Calendar.getInstance();
             initialDate.add(Calendar.SECOND, -OBSERVATION_WINDOW_SECONDS);
             //Calendar finalDate = Calendar.getInstance();
 
@@ -62,19 +62,14 @@ public class Main {
      */
     private static void calculateScoreNonNormalized(DataManager dataManager, Calendar initialDate, String monitoredPodsString) {
         String strDate = sdf.format(initialDate.getTime());
-	String[] pods = monitoredPodsString.split(",");
-        ResourceConsumptionScore resourceConsumptionScore = dataManager.getDataResourceConsumption(strDate,Integer.parseInt(pods[0]));
-        PerformanceScore performanceScore = dataManager.getDataPerformance(strDate, Integer.parseInt(pods[0]));
+        String[] pods = monitoredPodsString.split(",");
+        int resourceId = Integer.parseInt(pods[0]);
+        ResourceConsumptionScore resourceConsumptionScore = dataManager.getDataResourceConsumption(strDate, resourceId);
+        PerformanceScore performanceScore = dataManager.getDataPerformance(strDate, resourceId);
         if (resourceConsumptionScore != null && resourceConsumptionScore.isValid()) {
-            TrustworthinessScore score = new TrustworthinessScore(resourceConsumptionScore, performanceScore);
-            score.setMetricId(Constants.trustworthinessMetricId);
-            score.setValueTime(initialDate.getTimeInMillis() / 1000);
-            score.getResourceConsumptionScore().setValueTime(score.getValueTime());
-            score.getPerformanceScore().setValueTime(score.getValueTime());
-            score.setPodCount(KubernetesManager.getReplicas(statefulSetName));
-	    score.setResourceId(Integer.parseInt(pods[0]));
+            TrustworthinessScore score = obtainTrustworthinessScore(
+                    initialDate, resourceId, resourceConsumptionScore, performanceScore);
             dataManager.saveScore(score);
-            //System.out.println(strDate + "," + resourceConsumptionScore.getCsvLine() + ",singleReading");
             LOGGER.info("resourceScore: {}", resourceConsumptionScore.toString());
             LOGGER.info("performanceScore: {}", performanceScore.toString());
             LOGGER.info("TrustworthinessScore: {}", score.toString());
@@ -86,6 +81,26 @@ public class Main {
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * Creates the trustworthinessScore from the resourceConsumptionScore and performanceScore
+     * @param valueTime date of the score
+     * @param resourceId reference to the resource
+     * @param resourceConsumptionScore score of resource consumption
+     * @param performanceScore score of performance
+     * @return calculated trustworthiness score
+     */
+    private static TrustworthinessScore obtainTrustworthinessScore(Calendar valueTime, int resourceId,
+            ResourceConsumptionScore resourceConsumptionScore, PerformanceScore performanceScore) {
+        TrustworthinessScore score = new TrustworthinessScore(resourceConsumptionScore, performanceScore);
+        score.setMetricId(Constants.trustworthinessMetricId);
+        score.setValueTime(valueTime.getTimeInMillis() / 1000);
+        score.getResourceConsumptionScore().setValueTime(score.getValueTime());
+        score.getPerformanceScore().setValueTime(score.getValueTime());
+        score.setPodCount(KubernetesManager.getReplicas(statefulSetName));
+        score.setResourceId(resourceId);
+        return score;
     }
 
     private static void calculateScoreNormalized(DataManager dataManager, Calendar initialDate, Calendar finalDate) {
