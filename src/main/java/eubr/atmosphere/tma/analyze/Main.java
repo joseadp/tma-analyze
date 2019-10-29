@@ -62,7 +62,7 @@ public class Main {
 			 * purpose. The calculated score will be stored in Kafka
 			 */
 
-			String resources = PropertiesManager.getInstance().getProperty("CloudEAResources");
+			String resources = PropertiesManager.getInstance().getProperty("CloudEAResource");
 
 			Calendar now = Calendar.getInstance();
 
@@ -148,6 +148,26 @@ public class Main {
 			}
 		}
 	}
+
+    /**
+     * Creates the trustworthinessScore from the resourceConsumptionScore and performanceScore
+     * @param valueTime date of the score
+     * @param resourceId reference to the resource
+     * @param resourceConsumptionScore score of resource consumption
+     * @param performanceScore score of performance
+     * @return calculated trustworthiness score
+     */
+    private static TrustworthinessScore obtainTrustworthinessScore(Calendar valueTime, int resourceId,
+            ResourceConsumptionScore resourceConsumptionScore, PerformanceScore performanceScore) {
+        TrustworthinessScore score = new TrustworthinessScore(resourceConsumptionScore, performanceScore);
+        score.setMetricId(Constants.trustworthinessMetricId);
+        score.setValueTime(valueTime.getTimeInMillis() / 1000);
+        score.getResourceConsumptionScore().setValueTime(score.getValueTime());
+        score.getPerformanceScore().setValueTime(score.getValueTime());
+        score.setPodCount(KubernetesManager.getReplicas(statefulSetName));
+        score.setResourceId(resourceId);
+        return score;
+    }
 
 	private static void calculateScoreNormalized(DataManager dataManager, Calendar initialDate, Calendar finalDate) {
 		Calendar currentInitial = (Calendar) initialDate.clone();
