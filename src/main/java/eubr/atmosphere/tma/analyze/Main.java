@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import eubr.atmosphere.tma.utils.PerformanceScore;
 import eubr.atmosphere.tma.utils.ResourceConsumptionScore;
+import eubr.atmosphere.tma.utils.SecurityScore;
 import eubr.atmosphere.tma.utils.TrustworthinessScore;
 import eubr.atmosphere.tma.analyze.database.DataManager;
 import eubr.atmosphere.tma.analyze.utils.Constants;
@@ -19,174 +20,229 @@ import eubr.atmosphere.tma.analyze.utils.PropertiesManager;
 
 public class Main {
 
-    /** OBSERVATION_WINDOW: window that the readings will be used to calculate the score (in minutes) */
-    private static int OBSERVATION_WINDOW = 1;
-    private static int OBSERVATION_WINDOW_SECONDS = 30;
+	/**
+	 * OBSERVATION_WINDOW: window that the readings will be used to calculate the
+	 * score (in minutes)
+	 */
+	private static int OBSERVATION_WINDOW = 1;
+	private static int OBSERVATION_WINDOW_SECONDS = 30;
+	private static int OBSERVATION_WINDOW_DAY_FOR_SECURITYSCORE = 1;
 
-    private static SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
+	private static SimpleDateFormat sdf = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss");
 
-    private static KafkaManager kafkaManager;
+	private static KafkaManager kafkaManager;
 
-    private static String statefulSetName;
+	private static String statefulSetName;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
-    public static void main(String[] args) {
-        String monitoredPods = PropertiesManager.getInstance().getProperty("monitoredPods");
-        DataManager dataManager = new DataManager(monitoredPods);
-        kafkaManager = new KafkaManager();
+	public static void main(String[] args) {
+		String monitoredPods = PropertiesManager.getInstance().getProperty("monitoredPods");
+		DataManager dataManager = new DataManager(monitoredPods);
+		kafkaManager = new KafkaManager();
 
-        statefulSetName = PropertiesManager.getInstance().getProperty("statefulSetName");
+		statefulSetName = PropertiesManager.getInstance().getProperty("statefulSetName");
 
-        while (true) {
-        	Calendar initialDate = Calendar.getInstance();
-            initialDate.add(Calendar.SECOND, -OBSERVATION_WINDOW_SECONDS);
-            //Calendar finalDate = Calendar.getInstance();
+		int currentDay = 0;
 
-            //System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score,type");
-            //calculateScoreNormalized(dataManager, initialDate, finalDate);
-            calculateScoreNonNormalized(dataManager, initialDate, monitoredPods);
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+		while (true) {
+			Calendar initialDate = Calendar.getInstance();
 
-    /**
-     * Calculates the score without normalizing the data in advance.
-     * It assumes that the value is already the mean of the last minute.
-     * @param dataManager object used to manipulate the database
-     * @param initialDate initial date of the search
-     */
-    private static void calculateScoreNonNormalized(DataManager dataManager, Calendar initialDate, String monitoredPodsString) {
-        String strDate = sdf.format(initialDate.getTime());
-	String[] pods = monitoredPodsString.split(",");
-        ResourceConsumptionScore resourceConsumptionScore = dataManager.getDataResourceConsumption(strDate,Integer.parseInt(pods[0]));
-        PerformanceScore performanceScore = dataManager.getDataPerformance(strDate, Integer.parseInt(pods[0]));
-        if (resourceConsumptionScore != null && resourceConsumptionScore.isValid()) {
-            TrustworthinessScore score = new TrustworthinessScore(resourceConsumptionScore, performanceScore);
-            score.setMetricId(Constants.trustworthinessMetricId);
-            score.setValueTime(initialDate.getTimeInMillis() / 1000);
-            score.getResourceConsumptionScore().setValueTime(score.getValueTime());
-            score.getPerformanceScore().setValueTime(score.getValueTime());
-            score.setPodCount(KubernetesManager.getReplicas(statefulSetName));
-	    score.setResourceId(Integer.parseInt(pods[0]));
-            dataManager.saveScore(score);
-            //System.out.println(strDate + "," + resourceConsumptionScore.getCsvLine() + ",singleReading");
-            LOGGER.info("resourceScore: {}", resourceConsumptionScore.toString());
-            LOGGER.info("performanceScore: {}", performanceScore.toString());
-            LOGGER.info("TrustworthinessScore: {}", score.toString());
-            try {
-                kafkaManager.addItemKafka(score);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+			initialDate.add(Calendar.SECOND, -OBSERVATION_WINDOW_SECONDS);
+			// Calendar finalDate = Calendar.getInstance();
 
-    private static void calculateScoreNormalized(DataManager dataManager, Calendar initialDate, Calendar finalDate) {
-        Calendar currentInitial = (Calendar) initialDate.clone();
-        Calendar currentFinal = (Calendar) finalDate.clone();
+			// System.out.println("dateTime,cpuPod,memoryPod,cpuNode,memoryNode,score,type");
+			// calculateScoreNormalized(dataManager, initialDate, finalDate);
+			calculateScoreNonNormalized(dataManager, initialDate, monitoredPods);
 
-        currentInitial.add(Calendar.MINUTE, -OBSERVATION_WINDOW);
-        currentFinal.add(Calendar.MINUTE, -OBSERVATION_WINDOW);
+			
+			/**
+			 * Calculation of security score: the following lines of code calculate security
+			 * score once per day at 00:00 for all resources being monitored for this
+			 * purpose. The calculated score will be stored in Kafka
+			 */
 
-        int podId = 9;
+			String resources = PropertiesManager.getInstance().getProperty("CloudEAResources");
 
-        for (int i = 0; i < OBSERVATION_WINDOW; i++) {
-            String strInitialDate = sdf.format(currentInitial.getTime());
-            String strFinalDate = sdf.format(currentFinal.getTime());
+			Calendar now = Calendar.getInstance();
 
-            List<Double> valuesCpuPod =
-                    dataManager.getValuesPeriod(strInitialDate, strFinalDate,
-                    Constants.cpuDescriptionId, podId);
-            List<Double> valuesCpuPodNormalized = normalizeData(valuesCpuPod);
+			if (now.get(Calendar.DAY_OF_MONTH) != currentDay && now.get(Calendar.HOUR_OF_DAY) == 0
+					&& now.get(Calendar.MINUTE) == 0) {
+				// calculate the score
+				currentDay = now.get(Calendar.DAY_OF_MONTH);
 
-            List<Double> valuesMemoryPod =
-                    dataManager.getValuesPeriod(strInitialDate, strFinalDate,
-                    Constants.memoryDescriptionId, podId);
-            List<Double> valuesMemoryPodNormalized = normalizeData(valuesMemoryPod);
+				now.add(Calendar.DAY_OF_YEAR, -OBSERVATION_WINDOW_DAY_FOR_SECURITYSCORE);
+				calculateSecurityScore(dataManager, now, resources);
+			}
+			/****************************************************/
+			
+		
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
-            List<Double> valuesCpuNode =
-                    dataManager.getValuesPeriod(strInitialDate, strFinalDate,
-                    Constants.cpuDescriptionId, Constants.nodeId);
-            List<Double> valuesCpuNodeNormalized = normalizeData(valuesCpuNode);
+	private static void calculateSecurityScore(DataManager dataManager, Calendar initialDate, String resources) {
+		String strDate = sdf.format(initialDate.getTime());
+		String[] resourcesIds = resources.split(",");
 
-            List<Double> valuesMemoryNode =
-                    dataManager.getValuesPeriod(strInitialDate, strFinalDate,
-                    Constants.memoryDescriptionId, Constants.nodeId);
-            List<Double> valuesMemoryNodeNormalized = normalizeData(valuesMemoryNode);
+		
+		/** calculating security score for each resource separately*/
+		for (String resourceId : resourcesIds) {
+			SecurityScore securityScore = dataManager.getDataSecurity(strDate, Integer.parseInt(resourceId));
 
-            ////////////////////////////////////////////////////////////////////////////////////
-            LOGGER.debug("Size CPU-Pod: " + valuesCpuPod.size());
-            LOGGER.debug("Size Memory-Pod: " + valuesMemoryPod.size());
-            LOGGER.debug("Size CPU-Node: " + valuesCpuNode.size());
-            LOGGER.debug("Size Memory-Node: " + valuesMemoryNode.size());
+			if (securityScore != null && securityScore.getScore() != null) {
 
-            ////////////////////////////////////////////////////////////////////////////////////
-            ResourceConsumptionScore scoreNonNormalized = new ResourceConsumptionScore();
-            scoreNonNormalized.setCpuPod(getArithmeticMean(valuesCpuPod));
-            scoreNonNormalized.setMemoryPod(getArithmeticMean(valuesMemoryPod));
-            scoreNonNormalized.setCpuNode(getArithmeticMean(valuesCpuNode));
-            scoreNonNormalized.setMemoryNode(getArithmeticMean(valuesMemoryNode));
-            System.out.println(strFinalDate + "," + scoreNonNormalized.getCsvLine() + ",timeSeriesNonNormalized");
+				LOGGER.info("SecurityScore for Resource : ", resourceId, ": ", securityScore.toString());
 
-            ////////////////////////////////////////////////////////////////////////////////////
-            ResourceConsumptionScore scoreNormalized = new ResourceConsumptionScore();
-            scoreNormalized.setCpuPod(getArithmeticMean(valuesCpuPodNormalized));
-            scoreNormalized.setMemoryPod(getArithmeticMean(valuesMemoryPodNormalized));
-            scoreNormalized.setCpuNode(getArithmeticMean(valuesCpuNodeNormalized));
-            scoreNormalized.setMemoryNode(getArithmeticMean(valuesMemoryNodeNormalized));
-            System.out.println(strFinalDate + "," + scoreNormalized.getCsvLine() + ",timeSeriesNormalized");
+				try {
+					kafkaManager.addItemKafka(securityScore);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 
-            currentInitial.add(Calendar.MINUTE, 1);
-            currentFinal.add(Calendar.MINUTE, 1);
-        }
-    }
+	}
 
-    private static List<Double> normalizeData(List<Double> values) {
-        LOGGER.debug(values.toString());
-        Double mean = getArithmeticMean(values);
-        LOGGER.debug("Arithmetic Mean:" + mean);
-        Double standardDeviation = getStandardDeviation(values, mean);
-        LOGGER.debug("Standard Deviation:" + standardDeviation);
-        List<Double> normalizedData = getNormalizedData(values, mean, standardDeviation);
-        LOGGER.debug("Normalized Data:" + normalizedData);
-        return normalizedData;
-    }
+	/**
+	 * Calculates the score without normalizing the data in advance. It assumes that
+	 * the value is already the mean of the last minute.
+	 * 
+	 * @param dataManager object used to manipulate the database
+	 * @param initialDate initial date of the search
+	 */
+	private static void calculateScoreNonNormalized(DataManager dataManager, Calendar initialDate,
+			String monitoredPodsString) {
+		String strDate = sdf.format(initialDate.getTime());
+		String[] pods = monitoredPodsString.split(",");
+		ResourceConsumptionScore resourceConsumptionScore = dataManager.getDataResourceConsumption(strDate,
+				Integer.parseInt(pods[0]));
+		PerformanceScore performanceScore = dataManager.getDataPerformance(strDate, Integer.parseInt(pods[0]));
 
-    public static Double getArithmeticMean(List<Double> values) {
-        Double sum = 0.0;
-        int length = values.size();
-        for (int i = 0; i < length; i++) {
-            sum += values.get(i);
-        }
-        return sum / length;
-    }
+		if (resourceConsumptionScore != null && resourceConsumptionScore.isValid()) {
+			TrustworthinessScore score = new TrustworthinessScore(resourceConsumptionScore, performanceScore);
+			score.setMetricId(Constants.trustworthinessMetricId);
+			score.setValueTime(initialDate.getTimeInMillis() / 1000);
+			score.getResourceConsumptionScore().setValueTime(score.getValueTime());
+			score.getPerformanceScore().setValueTime(score.getValueTime());
+			score.setPodCount(KubernetesManager.getReplicas(statefulSetName));
+			score.setResourceId(Integer.parseInt(pods[0]));
+			dataManager.saveScore(score);
+			// System.out.println(strDate + "," + resourceConsumptionScore.getCsvLine() +
+			// ",singleReading");
+			LOGGER.info("resourceScore: {}", resourceConsumptionScore.toString());
+			LOGGER.info("performanceScore: {}", performanceScore.toString());
+			LOGGER.info("TrustworthinessScore: {}", score.toString());
+			try {
+				kafkaManager.addItemKafka(score);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
-    public static double getStandardDeviation(List<Double> values, Double mean) {
-        double standardDeviation = 0.0;
-        int length = values.size();
-        for (int i = 0; i < length; i++) {
-            standardDeviation += Math.pow(values.get(i) - mean, 2);
-        }
+	private static void calculateScoreNormalized(DataManager dataManager, Calendar initialDate, Calendar finalDate) {
+		Calendar currentInitial = (Calendar) initialDate.clone();
+		Calendar currentFinal = (Calendar) finalDate.clone();
 
-        return Math.sqrt(standardDeviation / length);
-    }
+		currentInitial.add(Calendar.MINUTE, -OBSERVATION_WINDOW);
+		currentFinal.add(Calendar.MINUTE, -OBSERVATION_WINDOW);
 
-    private static List<Double> getNormalizedData(List<Double> values,
-            Double mean, Double standardDeviation) {
-        List<Double> result = new ArrayList<Double>();
+		int podId = 9;
 
-        int length = values.size();
-        for (int i = 0; i < length; i++) {
-            standardDeviation += Math.pow(values.get(i) - mean, 2);
-            result.add((values.get(i) - mean) / standardDeviation);
-        }
-        return result;
-    }
+		for (int i = 0; i < OBSERVATION_WINDOW; i++) {
+			String strInitialDate = sdf.format(currentInitial.getTime());
+			String strFinalDate = sdf.format(currentFinal.getTime());
+
+			List<Double> valuesCpuPod = dataManager.getValuesPeriod(strInitialDate, strFinalDate,
+					Constants.cpuDescriptionId, podId);
+			List<Double> valuesCpuPodNormalized = normalizeData(valuesCpuPod);
+
+			List<Double> valuesMemoryPod = dataManager.getValuesPeriod(strInitialDate, strFinalDate,
+					Constants.memoryDescriptionId, podId);
+			List<Double> valuesMemoryPodNormalized = normalizeData(valuesMemoryPod);
+
+			List<Double> valuesCpuNode = dataManager.getValuesPeriod(strInitialDate, strFinalDate,
+					Constants.cpuDescriptionId, Constants.nodeId);
+			List<Double> valuesCpuNodeNormalized = normalizeData(valuesCpuNode);
+
+			List<Double> valuesMemoryNode = dataManager.getValuesPeriod(strInitialDate, strFinalDate,
+					Constants.memoryDescriptionId, Constants.nodeId);
+			List<Double> valuesMemoryNodeNormalized = normalizeData(valuesMemoryNode);
+
+			////////////////////////////////////////////////////////////////////////////////////
+			LOGGER.debug("Size CPU-Pod: " + valuesCpuPod.size());
+			LOGGER.debug("Size Memory-Pod: " + valuesMemoryPod.size());
+			LOGGER.debug("Size CPU-Node: " + valuesCpuNode.size());
+			LOGGER.debug("Size Memory-Node: " + valuesMemoryNode.size());
+
+			////////////////////////////////////////////////////////////////////////////////////
+			ResourceConsumptionScore scoreNonNormalized = new ResourceConsumptionScore();
+			scoreNonNormalized.setCpuPod(getArithmeticMean(valuesCpuPod));
+			scoreNonNormalized.setMemoryPod(getArithmeticMean(valuesMemoryPod));
+			scoreNonNormalized.setCpuNode(getArithmeticMean(valuesCpuNode));
+			scoreNonNormalized.setMemoryNode(getArithmeticMean(valuesMemoryNode));
+			System.out.println(strFinalDate + "," + scoreNonNormalized.getCsvLine() + ",timeSeriesNonNormalized");
+
+			////////////////////////////////////////////////////////////////////////////////////
+			ResourceConsumptionScore scoreNormalized = new ResourceConsumptionScore();
+			scoreNormalized.setCpuPod(getArithmeticMean(valuesCpuPodNormalized));
+			scoreNormalized.setMemoryPod(getArithmeticMean(valuesMemoryPodNormalized));
+			scoreNormalized.setCpuNode(getArithmeticMean(valuesCpuNodeNormalized));
+			scoreNormalized.setMemoryNode(getArithmeticMean(valuesMemoryNodeNormalized));
+			System.out.println(strFinalDate + "," + scoreNormalized.getCsvLine() + ",timeSeriesNormalized");
+
+			currentInitial.add(Calendar.MINUTE, 1);
+			currentFinal.add(Calendar.MINUTE, 1);
+		}
+	}
+
+	private static List<Double> normalizeData(List<Double> values) {
+		LOGGER.debug(values.toString());
+		Double mean = getArithmeticMean(values);
+		LOGGER.debug("Arithmetic Mean:" + mean);
+		Double standardDeviation = getStandardDeviation(values, mean);
+		LOGGER.debug("Standard Deviation:" + standardDeviation);
+		List<Double> normalizedData = getNormalizedData(values, mean, standardDeviation);
+		LOGGER.debug("Normalized Data:" + normalizedData);
+		return normalizedData;
+	}
+
+	public static Double getArithmeticMean(List<Double> values) {
+		Double sum = 0.0;
+		int length = values.size();
+		for (int i = 0; i < length; i++) {
+			sum += values.get(i);
+		}
+		return sum / length;
+	}
+
+	public static double getStandardDeviation(List<Double> values, Double mean) {
+		double standardDeviation = 0.0;
+		int length = values.size();
+		for (int i = 0; i < length; i++) {
+			standardDeviation += Math.pow(values.get(i) - mean, 2);
+		}
+
+		return Math.sqrt(standardDeviation / length);
+	}
+
+	private static List<Double> getNormalizedData(List<Double> values, Double mean, Double standardDeviation) {
+		List<Double> result = new ArrayList<Double>();
+
+		int length = values.size();
+		for (int i = 0; i < length; i++) {
+			standardDeviation += Math.pow(values.get(i) - mean, 2);
+			result.add((values.get(i) - mean) / standardDeviation);
+		}
+		return result;
+	}
 }

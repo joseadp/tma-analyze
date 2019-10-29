@@ -15,7 +15,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
 import eubr.atmosphere.tma.analyze.utils.PropertiesManager;
-import eubr.atmosphere.tma.utils.TrustworthinessScore;
+import eubr.atmosphere.tma.utils.Score;
 
 public class KafkaManager {
 
@@ -29,7 +29,7 @@ public class KafkaManager {
         this.producer = createProducer();
     }
 
-    public void addItemKafka(TrustworthinessScore score) throws InterruptedException, ExecutionException {
+    public void addItemKafka(Score score) throws InterruptedException, ExecutionException {
         long time = System.currentTimeMillis();
         JsonElement jsonElement = new Gson().toJsonTree(score);
         final ProducerRecord<Long, String> record =
