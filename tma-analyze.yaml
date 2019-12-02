@@ -2,17 +2,17 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: tma-analyze
+  name: tma-analyze-dei
 
 spec:
   selector:
     matchLabels:
-      run: tma-analyze
+      run: tma-analyze-dei
   template:
     metadata:
       labels:
-        run: tma-analyze
+        run: tma-analyze-dei
     spec:
       containers:
-      - name: tma-analyze
+      - name: tma-analyze-dei
         image: tma-analyze-dei
