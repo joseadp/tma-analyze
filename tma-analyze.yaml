@@ -15,4 +15,4 @@ spec:
     spec:
       containers:
       - name: tma-analyze
-        image: joseadp/tma-analyze
+        image: tma-analyze-dei
