@@ -148,7 +148,7 @@ public class DataManager {
 						break;
 					case Constants.ExistenceOfSecurityDefinitionsDescriptionId:
 						if (isMonitorizedResource(resourceId)) {
-							score.setExistenceOfSecurityDefnition(resourceId, value);
+							score.setExistenceOfSecurityDefinition(resourceId, value);
 						} else {
 							LOGGER.debug("Something is not right! " + stringTime);
 						}
