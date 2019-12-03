@@ -66,17 +66,17 @@ public class DataManager {
 
 	public SecurityScore getDataSecurity(String stringTime, int resource) {
 
-		String sql = "select Data.ResourceId, Data.DescriptionId, Data.value from "
-				+ "(SELECT Data.DescriptionId, Data.ResourceId, MAX(Data.valueTime) as temp_t FROM Data "
+		String sql = "select d.resourceId, d.descriptionId, d.value from "
+				+ "(SELECT dt.descriptionId, dt.resourceId, MAX(dt.valueTime) as temp_t FROM Data dt "
 				+ "where "
-				+ "DATE_FORMAT(Data.valueTime, \\\"%Y-%m-%d %H:%i:%s\\\") >= ? AND (probeId = ?) "
-				+ "group by Data.ResourceId, Data.DescriptionId) as temp_D "
+				+ "DATE_FORMAT(dt.valueTime, \\\"%Y-%m-%d %H:%i:%s\\\") >= ? AND (dt.probeId = ?) "
+				+ "group by dt.resourceId, dt.descriptionId) as temp_D "
 				+ "INNER JOIN "
-				+ "Data "
+				+ "Data d "
 				+ "on "
-				+ "temp_D.DescriptionId = Data.DescriptionId "
-				+ "and temp_D.ResourceId = Data.ResourceId "
-				+ "and temp_D.temp_t = Data.time_stamp";
+				+ "temp_D.descriptionId = d.descriptionId "
+				+ "and temp_D.ResourceId = d.resourceId "
+				+ "and temp_D.temp_t = d.valueTime";
 
 		if (this.connection != null) {
 			return executeQuerySecurity(stringTime, sql, resource);
