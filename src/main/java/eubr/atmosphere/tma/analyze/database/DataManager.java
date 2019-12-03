@@ -69,7 +69,7 @@ public class DataManager {
 		String sql = "select d.resourceId, d.descriptionId, d.value from "
 				+ "(SELECT dt.descriptionId, dt.resourceId, MAX(dt.valueTime) as temp_t FROM Data dt "
 				+ "where "
-				+ "DATE_FORMAT(dt.valueTime, \\\"%Y-%m-%d %H:%i:%s\\\") >= ? AND (dt.probeId = ?) "
+				+ "DATE_FORMAT(dt.valueTime, '%Y-%m-%d %H:%i:%s') >= ? AND (dt.probeId = ?) "
 				+ "group by dt.resourceId, dt.descriptionId) as temp_D "
 				+ "INNER JOIN "
 				+ "Data d "
