@@ -28,6 +28,10 @@ public class DataManager {
 	public final Integer probeIdPerformance;
 	public final Integer probeIdSecurity;
 
+	private static final String METRIC_DATA_INSERT_SQL =
+			"INSERT INTO MetricData(metricId, valueTime, value, resourceId) "
+			+ "VALUES (?, FROM_UNIXTIME(?), ?, ?)";
+
 	public DataManager(String monitoredPodsString) {
 		this.connection = DatabaseManager.getConnectionInstance();
 		this.probeIdResourceConsumption = Integer
@@ -351,6 +355,25 @@ public class DataManager {
 		return values;
 	}
 
+	public int saveScore(SecurityScore score) {
+		PreparedStatement ps;
+
+		try {
+			ps = DatabaseManager.getConnectionInstance().prepareStatement(METRIC_DATA_INSERT_SQL);
+
+			ps.setInt(1, score.getMetricId());
+			ps.setLong(2, score.getValueTime());
+			ps.setDouble(3, score.getScore());
+			ps.setInt(4, score.getResourceId());
+
+			DatabaseManager databaseManager = new DatabaseManager();
+			return databaseManager.execute(ps);
+		} catch (SQLException e) {
+			LOGGER.error("[ATMOSPHERE] Error when inserting a plan in the database.", e);
+		}
+		return null;
+	}
+
 	public int[] saveScore(TrustworthinessScore score) {
 		// TODO This method should save not only the Trustworthiness score, but also the
 		// resourceConsumptionScore and performanceScore
@@ -362,12 +385,10 @@ public class DataManager {
 
 		// The score will be saved in the MetricData table
 
-		String sql = "INSERT INTO MetricData(metricId, valueTime, value, resourceId) "
-				+ "VALUES (?, FROM_UNIXTIME(?), ?, ?)";
 		PreparedStatement ps;
 
 		try {
-			ps = DatabaseManager.getConnectionInstance().prepareStatement(sql);
+			ps = DatabaseManager.getConnectionInstance().prepareStatement(METRIC_DATA_INSERT_SQL);
 
 			ps.setInt(1, score.getMetricId());
 			ps.setLong(2, score.getValueTime());
