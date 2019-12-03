@@ -355,7 +355,7 @@ public class DataManager {
 		return values;
 	}
 
-	public int saveScore(SecurityScore score) {
+	public int saveScoreSecurity(SecurityScore score) {
 		PreparedStatement ps;
 
 		try {

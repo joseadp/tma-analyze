@@ -97,7 +97,7 @@ public class Main {
 			if (securityScore != null && securityScore.getScore() != null) {
 
 				LOGGER.info("SecurityScore for Resource : ", resourceId, ": ", securityScore.toString());
-				dataManager.saveScore(score);
+				dataManager.saveScoreSecurity(score);
 
 				try {
 					kafkaManager.addItemKafka(securityScore);
