@@ -69,7 +69,7 @@ public class DataManager {
 		String sql = "select Data.ResourceId, Data.DescriptionId, Data.value from "
 				+ "(SELECT Data.DescriptionId, Data.ResourceId, MAX(Data.valueTime) as temp_t FROM Data "
 				+ "where "
-				+ "DATE_FORMAT(Data.valueTime, \\\"%Y-%m-%d %H:%i:%s\\\") >= ? AND\" + \"(probeId = ?) "
+				+ "DATE_FORMAT(Data.valueTime, \\\"%Y-%m-%d %H:%i:%s\\\") >= ? AND (probeId = ?) "
 				+ "group by Data.ResourceId, Data.DescriptionId) as temp_D "
 				+ "INNER JOIN "
 				+ "Data "
@@ -78,9 +78,6 @@ public class DataManager {
 				+ "and temp_D.ResourceId = Data.ResourceId "
 				+ "and temp_D.temp_t = Data.time_stamp";
 
-//		String sql = "select descriptionId, resourceId, value from Data " + "where "
-//				+ "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i:%s\") >= ? AND" + "(probeId = ?) "
-//				+ "group by descriptionId, resourceId;";
 		if (this.connection != null) {
 			return executeQuerySecurity(stringTime, sql, resource);
 		} else {
