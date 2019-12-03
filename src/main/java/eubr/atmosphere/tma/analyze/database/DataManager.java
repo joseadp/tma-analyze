@@ -115,11 +115,9 @@ public class DataManager {
 					Double value = ((Double) rs.getObject("value"));
 
 					
-					LOGGER.info("descriptionId: " + descriptionId+ "resourceId: "+ resourceId+ "value: "+ value);
 					switch (descriptionId) {
 
 					case Constants.ExistenceOfBestPracticeDescriptionId:
-						LOGGER.info("ExistenceOfBestPracticeDescriptionId: "+Constants.ExistenceOfBestPracticeDescriptionId);
 						if (isMonitorizedResource(resourceId)) {
 							score.setExistenceOfBestPractice(resourceId, value);
 						} else {
@@ -128,8 +126,6 @@ public class DataManager {
 						break;
 
 					case Constants.ExistenceOfCheckAreaDescriptionId:
-						LOGGER.info("ExistenceOfCheckAreaDescriptionId: "+Constants.ExistenceOfCheckAreaDescriptionId);
-
 						if (isMonitorizedResource(resourceId)) {
 							score.setExistenceOfCheckAreas(resourceId, value);
 						} else {
@@ -138,8 +134,6 @@ public class DataManager {
 						break;
 
 					case Constants.ExistenceOfPolicyDescriptionId:
-						LOGGER.info("ExistenceOfPolicyDescriptionId: "+Constants.ExistenceOfPolicyDescriptionId);
-
 						if (isMonitorizedResource(resourceId)) {
 							score.setExistenceOfPolicy(resourceId, value);
 						} else {
@@ -148,8 +142,6 @@ public class DataManager {
 						break;
 
 					case Constants.ExistenceOfSecurityControlDescriptionId:
-						LOGGER.info("ExistenceOfSecurityControlDescriptionId: "+Constants.ExistenceOfSecurityControlDescriptionId);
-
 						if (isMonitorizedResource(resourceId)) {
 							score.setExistenceOfSecurityControl(resourceId, value);
 						} else {
@@ -157,8 +149,6 @@ public class DataManager {
 						}
 						break;
 					case Constants.ExistenceOfSecurityDefinitionsDescriptionId:
-						LOGGER.info("ExistenceOfSecurityDefinitionsDescriptionId: "+Constants.ExistenceOfSecurityDefinitionsDescriptionId);
-
 						if (isMonitorizedResource(resourceId)) {
 							score.setExistenceOfSecurityDefinition(resourceId, value);
 						} else {
@@ -325,7 +315,6 @@ public class DataManager {
 	}
 
 	public boolean isMonitorizedResource(int podId) {
-		LOGGER.info("does monitoredPods contain "+podId+"? "+ this.monitoredPods.contains(podId));
 		return this.monitoredPods.contains(podId);
 	}
 
