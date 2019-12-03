@@ -371,7 +371,7 @@ public class DataManager {
 		} catch (SQLException e) {
 			LOGGER.error("[ATMOSPHERE] Error when inserting a plan in the database.", e);
 		}
-		return null;
+		return -1;
 	}
 
 	public int[] saveScore(TrustworthinessScore score) {
