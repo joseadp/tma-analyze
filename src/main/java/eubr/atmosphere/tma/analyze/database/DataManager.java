@@ -110,6 +110,8 @@ public class DataManager {
 					int resourceId = ((Integer) rs.getObject("resourceId"));
 					Double value = ((Double) rs.getObject("value"));
 
+					
+					LOGGER.info("descriptionId: " + descriptionId+ "resourceId: "+ resourceId+ "value: "+ value);
 					switch (descriptionId) {
 
 					case Constants.ExistenceOfBestPracticeDescriptionId:
