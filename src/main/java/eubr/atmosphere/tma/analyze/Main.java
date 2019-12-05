@@ -100,7 +100,7 @@ public class Main {
 				dataManager.saveScoreSecurity(securityScore);
 
 				try {
-					kafkaManager.addItemKafka(securityScore);
+					kafkaManager.addItemKafka(new TrustworthinessScore(securityScore));
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				} catch (ExecutionException e) {
