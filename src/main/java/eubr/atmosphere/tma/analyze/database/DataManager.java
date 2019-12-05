@@ -10,7 +10,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import eubr.atmosphere.tma.utils.DatabaseManager;
+import eubr.atmosphere.tma.database.DatabaseManager;
 import eubr.atmosphere.tma.utils.PerformanceScore;
 import eubr.atmosphere.tma.utils.ResourceConsumptionScore;
 import eubr.atmosphere.tma.utils.SecurityScore;
