@@ -10,225 +10,400 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import eubr.atmosphere.tma.database.DatabaseManager;
 import eubr.atmosphere.tma.utils.PerformanceScore;
 import eubr.atmosphere.tma.utils.ResourceConsumptionScore;
+import eubr.atmosphere.tma.utils.SecurityScore;
+import eubr.atmosphere.tma.utils.TrustworthinessScore;
 import eubr.atmosphere.tma.analyze.utils.Constants;
 import eubr.atmosphere.tma.analyze.utils.PropertiesManager;
 
 public class DataManager {
 
-    private Connection connection = DatabaseManager.getConnectionInstance();
+	private Connection connection = DatabaseManager.getConnectionInstance();
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataManager.class);
-    public final List<Integer> monitoredPods = new ArrayList<Integer>();
-    public final Integer probeIdResourceConsumption;
-    public final Integer probeIdPerformance;
+	private static final Logger LOGGER = LoggerFactory.getLogger(DataManager.class);
+	public final List<Integer> monitoredPods = new ArrayList<Integer>();
+	public final Integer probeIdResourceConsumption;
+	public final Integer probeIdPerformance;
+	public final Integer probeIdSecurity;
 
-    public DataManager(String monitoredPodsString) {
-        this.connection = DatabaseManager.getConnectionInstance();
-        this.probeIdResourceConsumption =
-                Integer.parseInt(PropertiesManager.getInstance().getProperty("probeIdResourceConsumption"));
-        this.probeIdPerformance =
-                Integer.parseInt(PropertiesManager.getInstance().getProperty("probeIdPerformance"));
+	private static final String METRIC_DATA_INSERT_SQL =
+			"INSERT INTO MetricData(metricId, valueTime, value, resourceId) "
+			+ "VALUES (?, FROM_UNIXTIME(?), ?, ?)";
 
-        String[] pods = monitoredPodsString.split(",");
-        for (int i = 0; i < pods.length; i++)
-            this.monitoredPods.add(Integer.parseInt(pods[i]));
-    }
+	public DataManager(String monitoredPodsString) {
+		this.connection = DatabaseManager.getConnectionInstance();
+		this.probeIdResourceConsumption = Integer
+				.parseInt(PropertiesManager.getInstance().getProperty("probeIdResourceConsumption"));
+		this.probeIdPerformance = Integer.parseInt(PropertiesManager.getInstance().getProperty("probeIdPerformance"));
+		this.probeIdSecurity = Integer.parseInt(PropertiesManager.getInstance().getProperty("probeIdSecurity"));
 
-    public ResourceConsumptionScore getDataResourceConsumption(String stringTime) {
-        String sql = "select descriptionId, resourceId, avg(value) as value from Data "
-                + "where "
-                + "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i:%s\") >= ? AND"
-                + "(probeId = ?) "
-                + "group by descriptionId, resourceId;";
-        if (this.connection != null) {
-            return executeQueryResourceConsumption(stringTime, sql);
-        } else {
-            LOGGER.error("The connection is null!");
-            return null;
-        }
-    }
+		String[] pods = monitoredPodsString.split(",");
+		for (int i = 0; i < pods.length; i++)
+			this.monitoredPods.add(Integer.parseInt(pods[i]));
+	}
 
-    public PerformanceScore getDataPerformance(String stringTime) {
-        String sql = "select descriptionId, resourceId, avg(value) as value from Data "
-                + "where "
-                + "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i:%s\") >= ? AND"
-                + "(probeId = ?) "
-                + "group by descriptionId, resourceId;";
-        if (this.connection != null) {
-            return executeQueryPerformance(stringTime, sql);
-        } else {
-            LOGGER.error("The connection is null!");
-            return null;
-        }
-    }
+	public ResourceConsumptionScore getDataResourceConsumption(String stringTime, int resource) {
+		String sql = "select descriptionId, resourceId, avg(value) as value from Data " + "where "
+				+ "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i:%s\") >= ? AND" + "(probeId = ?) "
+				+ "group by descriptionId, resourceId;";
+		if (this.connection != null) {
+			return executeQueryResourceConsumption(stringTime, sql, resource);
+		} else {
+			LOGGER.error("The connection is null!");
+			return null;
+		}
+	}
 
-    private ResourceConsumptionScore executeQueryResourceConsumption(String stringTime, String sql) {
-        ResourceConsumptionScore score = null;
-        try {
-            PreparedStatement ps = this.connection.prepareStatement(sql);
-            ps.setString(1, stringTime);
-            ps.setInt(2, probeIdResourceConsumption);
-            ResultSet rs = DatabaseManager.executeQuery(ps);
-    
-            if (rs.next()) {
-                score = new ResourceConsumptionScore();
-                int cpuCount = 0;
-                int memoryCount = 0;
-                do {
-                    int descriptionId = ((Integer) rs.getObject("descriptionId"));
-                    int resourceId = ((Integer) rs.getObject("resourceId"));
-                    Double value = ((Double) rs.getObject("value"));
+	public PerformanceScore getDataPerformance(String stringTime, int resource) {
+		String sql = "select descriptionId, resourceId, avg(value) as value from Data " + "where "
+				+ "DATE_FORMAT(valueTime, \"%Y-%m-%d %H:%i:%s\") >= ? AND" + "(probeId = ?) "
+				+ "group by descriptionId, resourceId;";
+		if (this.connection != null) {
+			return executeQueryPerformance(stringTime, sql, resource);
+		} else {
+			LOGGER.error("The connection is null!");
+			return null;
+		}
+	}
 
-                    switch (descriptionId) {
+	public SecurityScore getDataSecurity(String stringTime, int resource) {
 
-                    case Constants.cpuDescriptionId:
-                        if (isMonitorizedResource(resourceId)) {
-                            score.setCpuPod(score.getCpuPod() + value);
-                        } else {
-                            if (resourceId == Constants.nodeId) {
-                                // score.setCpuNode(value);
-                                // However, it was decided to change the score to use the maximum of the CPU capacity.
-                                // This way, we will know how much CPU the pod is using
-                                score.setCpuNode(Constants.maxCPU);
-                            } else {
-                                LOGGER.debug("Something is not right! " + stringTime);
-                            }
-                        }
-                        break;
+		String sql = "select d.resourceId, d.descriptionId, d.value from "
+				+ "(SELECT dt.descriptionId, dt.resourceId, MAX(dt.valueTime) as temp_t FROM Data dt "
+				+ "where "
+				+ "DATE_FORMAT(dt.valueTime, '%Y-%m-%d %H:%i:%s') >= ? AND (dt.probeId = ?) "
+				+ "group by dt.resourceId, dt.descriptionId) as temp_D "
+				+ "INNER JOIN "
+				+ "Data d "
+				+ "on "
+				+ "temp_D.descriptionId = d.descriptionId "
+				+ "and temp_D.ResourceId = d.resourceId "
+				+ "and temp_D.temp_t = d.valueTime";
 
-                    case Constants.memoryDescriptionId:
-                        if (isMonitorizedResource(resourceId)) {
-                            // It is needed to convert from bytes to Mi
-                            score.setMemoryPod(score.getMemoryPod() + value / 1024);
-                        } else {
-                            if (resourceId == Constants.nodeId) {
-                                // It is necessary to divide per 1024 to convert from bytes to Mi.
-                                // score.setMemoryNode(value / 1024);
-                                // However, it was decided to change the score to use the maximum of the memory capacity.
-                                // This way, we will know how much Memory the pod is using
-                                score.setMemoryNode(Constants.maxMemory);
-                            } else {
-                                LOGGER.debug("Something is not right! " + stringTime);
-                            }
-                        }
-                        break;
+		if (this.connection != null) {
+			return executeQuerySecurity(stringTime, sql, resource);
+		} else {
+			LOGGER.error("The connection is null!");
+			return null;
+		}
 
-                    default:
-                        LOGGER.debug("Something is not right! {}, descriptionId: {}", stringTime, descriptionId);
-                        break;
-                    }
-                    //String valueTime = rs.getObject("valueTime").toString();
-                } while (rs.next());
-    
-                LOGGER.debug("cpuCount: {} / memoryCount: {}", cpuCount, memoryCount);
-            } else {
-                LOGGER.info("No data on: " + stringTime);
-            }
-            return score;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return score;
-    }
-    
-    private PerformanceScore executeQueryPerformance(String stringTime, String sql) {
-        PerformanceScore score = new PerformanceScore();
-        try {
-            PreparedStatement ps = this.connection.prepareStatement(sql);
-            ps.setString(1, stringTime);
-            ps.setInt(2, probeIdPerformance);
-            ResultSet rs = DatabaseManager.executeQuery(ps);
-    
-            if (rs.next()) {
-                do {
-                    int descriptionId = ((Integer) rs.getObject("descriptionId"));
-                    int resourceId = ((Integer) rs.getObject("resourceId"));
-                    Double value = ((Double) rs.getObject("value"));
+	}
 
-                    switch (descriptionId) {
+	/**
+	 * This method executes the query for retrieving data regarding the
+	 * SecurityMetric. The data belong to various descriptions and may belong to
+	 * even various resources.
+	 */
+	private SecurityScore executeQuerySecurity(String stringTime, String sql, int resource) {
+		SecurityScore score = new SecurityScore();
+		score.setMetricId(Constants.securityDellMetricId);
+		score.setValueTime(System.currentTimeMillis() / 1000);
+		score.setResourceId(resource);
 
-                    case Constants.responseTimeDescriptionId:
-                        if (isMonitorizedResource(resourceId)) {
-                            score.setResponseTime(value);
-                        } else {
-                            LOGGER.debug("Something is not right! " + stringTime);
-                        }
-                        break;
+		try {
+			PreparedStatement ps = this.connection.prepareStatement(sql);
+			ps.setString(1, stringTime);
+			ps.setInt(2, probeIdSecurity);
+			ResultSet rs = DatabaseManager.executeQuery(ps);
 
-                    case Constants.throughputDescriptionId:
-                        if (isMonitorizedResource(resourceId)) {
-                            score.setThroughput(value);
-                        } else {
-                            LOGGER.debug("Something is not right! " + stringTime);
-                        }
-                        break;
+			if (rs.next()) {
+				do {
+					int descriptionId = ((Integer) rs.getObject("descriptionId"));
+					int resourceId = ((Integer) rs.getObject("resourceId"));
+					Double value = ((Double) rs.getObject("value"));
 
-                    case Constants.demandDescriptionId:
-                        if (isMonitorizedResource(resourceId)) {
-                            score.setDemand(value);
-                        } else {
-                            LOGGER.debug("Something is not right! " + stringTime);
-                        }
-                        break;
+					
+					switch (descriptionId) {
 
-                    case Constants.rateRequestUnderContractedDescriptionId:
-                        if (isMonitorizedResource(resourceId)) {
-                            score.setRateRequestUnderContracted(value);
-                        } else {
-                            LOGGER.debug("Something is not right! " + stringTime);
-                        }
-                        break;
+					case Constants.ExistenceOfBestPracticeDescriptionId:
+						if (isMonitorizedResource(resourceId)) {
+							score.setExistenceOfBestPractice(resourceId, value);
+						} else {
+							LOGGER.debug("Something is not right! " + stringTime);
+						}
+						break;
 
-                    default:
-                        LOGGER.debug("Something is not right! {}, descriptionId: {}", stringTime, descriptionId);
-                        break;
-                    }
-                    //String valueTime = rs.getObject("valueTime").toString();
-                } while (rs.next());
+					case Constants.ExistenceOfCheckAreaDescriptionId:
+						if (isMonitorizedResource(resourceId)) {
+							score.setExistenceOfCheckAreas(resourceId, value);
+						} else {
+							LOGGER.debug("Something is not right! " + stringTime);
+						}
+						break;
 
-            } else {
-                LOGGER.info("No data on: " + stringTime);
-            }
-            return score;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return score;
-    }
+					case Constants.ExistenceOfPolicyDescriptionId:
+						if (isMonitorizedResource(resourceId)) {
+							score.setExistenceOfPolicy(resourceId, value);
+						} else {
+							LOGGER.debug("Something is not right! " + stringTime);
+						}
+						break;
 
-    public boolean isMonitorizedResource(int podId) {
-        return this.monitoredPods.contains(podId);
-    }
+					case Constants.ExistenceOfSecurityControlDescriptionId:
+						if (isMonitorizedResource(resourceId)) {
+							score.setExistenceOfSecurityControl(resourceId, value);
+						} else {
+							LOGGER.debug("Something is not right! " + stringTime);
+						}
+						break;
+					case Constants.ExistenceOfSecurityDefinitionsDescriptionId:
+						if (isMonitorizedResource(resourceId)) {
+							score.setExistenceOfSecurityDefinition(resourceId, value);
+						} else {
+							LOGGER.debug("Something is not right! " + stringTime);
+						}
+						break;
 
-    public List<Double> getValuesPeriod(String initialDateTime, String finalDateTime,
-            int descriptionId, int resourceId) {
-        String sql = "select * from Data "
-                + "where "
-                + "valueTime between ? and ? and "
-                + "descriptionId = ? and "
-                + "resourceId = ? "
-                + "order by valueTime;";
+					default:
+						LOGGER.debug("Something is not right! {}, descriptionId: {}", stringTime, descriptionId);
+						break;
+					}
+					// String valueTime = rs.getObject("valueTime").toString();
+				} while (rs.next());
 
-        List<Double> values = new ArrayList<Double>();
+			} else {
+				LOGGER.info("No data on: " + stringTime);
+			}
+			return score;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return score;
+	}
 
-        try {
-            PreparedStatement ps = this.connection.prepareStatement(sql);
-            ps.setString(1, initialDateTime);
-            ps.setString(2, finalDateTime);
-            ps.setInt(3, descriptionId);
-            ps.setInt(4, resourceId);
+	private ResourceConsumptionScore executeQueryResourceConsumption(String stringTime, String sql, int resource) {
+		ResourceConsumptionScore score = null;
+		try {
+			PreparedStatement ps = this.connection.prepareStatement(sql);
+			ps.setString(1, stringTime);
+			ps.setInt(2, probeIdResourceConsumption);
+			ResultSet rs = DatabaseManager.executeQuery(ps);
 
-            ResultSet rs = DatabaseManager.executeQuery(ps);
+			if (rs.next()) {
+				score = new ResourceConsumptionScore();
+				score.setResourceId(resource);
+				score.setMetricId(Constants.resourceConsumptionMetricId);
+				int cpuCount = 0;
+				int memoryCount = 0;
+				do {
+					int descriptionId = ((Integer) rs.getObject("descriptionId"));
+					int resourceId = ((Integer) rs.getObject("resourceId"));
+					Double value = ((Double) rs.getObject("value"));
 
-            while (rs.next()) {
-                Double value = ((Double) rs.getObject("value"));
-                values.add(value);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return values;
-    }
+					switch (descriptionId) {
+
+					case Constants.cpuDescriptionId:
+						if (isMonitorizedResource(resourceId)) {
+							score.setCpuPod(score.getCpuPod() + value);
+						} else {
+							if (resourceId == Constants.nodeId) {
+								// score.setCpuNode(value);
+								// However, it was decided to change the score to use the maximum of the CPU
+								// capacity.
+								// This way, we will know how much CPU the pod is using
+								score.setCpuNode(Constants.maxCPU);
+							} else {
+								LOGGER.debug("Something is not right! " + stringTime);
+							}
+						}
+						break;
+
+					case Constants.memoryDescriptionId:
+						if (isMonitorizedResource(resourceId)) {
+							// It is needed to convert from bytes to Mi
+							score.setMemoryPod(score.getMemoryPod() + value / 1024);
+						} else {
+							if (resourceId == Constants.nodeId) {
+								// It is necessary to divide per 1024 to convert from bytes to Mi.
+								// score.setMemoryNode(value / 1024);
+								// However, it was decided to change the score to use the maximum of the memory
+								// capacity.
+								// This way, we will know how much Memory the pod is using
+								score.setMemoryNode(Constants.maxMemory);
+							} else {
+								LOGGER.debug("Something is not right! " + stringTime);
+							}
+						}
+						break;
+
+					default:
+						LOGGER.debug("Something is not right! {}, descriptionId: {}", stringTime, descriptionId);
+						break;
+					}
+					// String valueTime = rs.getObject("valueTime").toString();
+				} while (rs.next());
+
+				LOGGER.debug("cpuCount: {} / memoryCount: {}", cpuCount, memoryCount);
+			} else {
+				LOGGER.info("No data on: " + stringTime);
+			}
+			return score;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return score;
+	}
+
+	private PerformanceScore executeQueryPerformance(String stringTime, String sql, int resource) {
+		PerformanceScore score = new PerformanceScore();
+		score.setMetricId(Constants.performanceMetricId);
+		score.setResourceId(resource);
+		try {
+			PreparedStatement ps = this.connection.prepareStatement(sql);
+			ps.setString(1, stringTime);
+			ps.setInt(2, probeIdPerformance);
+			ResultSet rs = DatabaseManager.executeQuery(ps);
+
+			if (rs.next()) {
+				do {
+					int descriptionId = ((Integer) rs.getObject("descriptionId"));
+					int resourceId = ((Integer) rs.getObject("resourceId"));
+					Double value = ((Double) rs.getObject("value"));
+					score.setMetricId(Constants.performanceMetricId);
+
+					switch (descriptionId) {
+
+					case Constants.responseTimeDescriptionId:
+						if (isMonitorizedResource(resourceId)) {
+							score.setResponseTime(value);
+						} else {
+							LOGGER.debug("Something is not right! " + stringTime);
+						}
+						break;
+
+					case Constants.throughputDescriptionId:
+						if (isMonitorizedResource(resourceId)) {
+							score.setThroughput(value);
+						} else {
+							LOGGER.debug("Something is not right! " + stringTime);
+						}
+						break;
+
+					case Constants.demandDescriptionId:
+						if (isMonitorizedResource(resourceId)) {
+							score.setDemand(value);
+						} else {
+							LOGGER.debug("Something is not right! " + stringTime);
+						}
+						break;
+
+					case Constants.rateRequestUnderContractedDescriptionId:
+						if (isMonitorizedResource(resourceId)) {
+							score.setRateRequestUnderContracted(value);
+						} else {
+							LOGGER.debug("Something is not right! " + stringTime);
+						}
+						break;
+
+					default:
+						LOGGER.debug("Something is not right! {}, descriptionId: {}", stringTime, descriptionId);
+						break;
+					}
+					// String valueTime = rs.getObject("valueTime").toString();
+				} while (rs.next());
+
+			} else {
+				LOGGER.info("No data on: " + stringTime);
+			}
+			return score;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return score;
+	}
+
+	public boolean isMonitorizedResource(int podId) {
+		return this.monitoredPods.contains(podId);
+	}
+
+	public List<Double> getValuesPeriod(String initialDateTime, String finalDateTime, int descriptionId,
+			int resourceId) {
+		String sql = "select * from Data " + "where " + "valueTime between ? and ? and " + "descriptionId = ? and "
+				+ "resourceId = ? " + "order by valueTime;";
+
+		List<Double> values = new ArrayList<Double>();
+
+		try {
+			PreparedStatement ps = this.connection.prepareStatement(sql);
+			ps.setString(1, initialDateTime);
+			ps.setString(2, finalDateTime);
+			ps.setInt(3, descriptionId);
+			ps.setInt(4, resourceId);
+
+			ResultSet rs = DatabaseManager.executeQuery(ps);
+
+			while (rs.next()) {
+				Double value = ((Double) rs.getObject("value"));
+				values.add(value);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return values;
+	}
+
+	public int saveScoreSecurity(SecurityScore score) {
+		PreparedStatement ps;
+
+		try {
+			ps = DatabaseManager.getConnectionInstance().prepareStatement(METRIC_DATA_INSERT_SQL);
+
+			ps.setInt(1, score.getMetricId());
+			ps.setLong(2, score.getValueTime());
+			ps.setDouble(3, score.getScore());
+			ps.setInt(4, score.getResourceId());
+
+			DatabaseManager databaseManager = new DatabaseManager();
+			return databaseManager.execute(ps);
+		} catch (SQLException e) {
+			LOGGER.error("[ATMOSPHERE] Error when inserting a plan in the database.", e);
+		}
+		return -1;
+	}
+
+	public int[] saveScore(TrustworthinessScore score) {
+		// TODO This method should save not only the Trustworthiness score, but also the
+		// resourceConsumptionScore and performanceScore
+
+		// TODO Use the following constants:
+		// Constants.resourceConsumptionMetricId;
+		// Constants.performanceMetricId;
+		// Constants.trustworthinessMetricId;
+
+		// The score will be saved in the MetricData table
+
+		PreparedStatement ps;
+
+		try {
+			ps = DatabaseManager.getConnectionInstance().prepareStatement(METRIC_DATA_INSERT_SQL);
+
+			ps.setInt(1, score.getMetricId());
+			ps.setLong(2, score.getValueTime());
+			ps.setDouble(3, score.getScore());
+			ps.setInt(4, score.getResourceId());
+			ps.addBatch();
+
+			ResourceConsumptionScore rcScore = score.getResourceConsumptionScore();
+			ps.setInt(1, rcScore.getMetricId());
+			ps.setLong(2, rcScore.getValueTime());
+			ps.setDouble(3, rcScore.getScore());
+			ps.setInt(4, rcScore.getResourceId());
+			ps.addBatch();
+
+			PerformanceScore performanceScore = score.getPerformanceScore();
+			ps.setInt(1, performanceScore.getMetricId());
+			ps.setLong(2, performanceScore.getValueTime());
+			ps.setDouble(3, performanceScore.getScore());
+			ps.setInt(4, performanceScore.getResourceId());
+			ps.addBatch();
+
+			DatabaseManager databaseManager = new DatabaseManager();
+			return databaseManager.executeBatch(ps);
+		} catch (SQLException e) {
+			LOGGER.error("[ATMOSPHERE] Error when inserting a plan in the database.", e);
+		}
+		return null;
+	}
 }
